@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+# Admin -- migel -- 17.08.2011 -- mhatakeyama@ywesee.com 
+
+$0 = "migel (Admin-Tool)"
+
+$:.push(File.expand_path('../lib', File.dirname(__FILE__)))
+
+$KCODE = 'u'
+
+require 'drb'
+require 'sbsm/drb'
+require 'migel'
+require 'migel/config'
+require 'encoding/character/utf-8'
+require 'readline'
+include Readline
+
+Kernel.trap('INT') {
+  if($current.respond_to?(:exit))
+    $current.exit
+    $current = nil
+  else
+    puts "<ctrl-c> is used to kill admin-threads."
+    puts "Type <quit> or <exit> to exit."
+  end
+}
+
+prompt = 'migel> '
+DRb.start_service('druby://localhost:0')
+migel = DRbObject.new(nil, Migel.config.server_url)
+last_error = nil
+priority = -1
+while(line = readline(prompt, true))
+  result = ''
+  result.extend(DRb::DRbUndumped)
+  line.strip!
+  $stdout.print "-> "
+  case line.downcase
+  when 'exit', 'quit'
+    $stdout.puts 'Goodbye'
+    break
+  when 'bt', 'backtrace'
+    if last_error.respond_to?(:backtrace)
+      $stdout.puts last_error.backtrace 
+    else
+      $stdout.puts 'No Error'
+    end
+  when /^last_error/
+    begin
+      $stdout.puts eval(line)
+    rescue StandardError, SyntaxError => last_error
+      $stdout.puts last_error
+    end
+  when /sp\s+(-?\d+)/, /set_priority\s+(-?\d+)/ 
+    priority = $~[1].to_i
+    $stdout.puts "setting Priority to #{priority}"
+  else
+    begin
+      bgflag = line.slice!(/\s*\&\s*$/)
+      $current = migel._admin(line, result, priority)
+      unless(bgflag)
+        last_error = $current.join
+      end
+      $stdout.puts result
+    rescue StandardError, SyntaxError => last_error
+      $stdout.puts last_error
+    end
+  end
+  $current = nil
+  $stdout.flush
+end
