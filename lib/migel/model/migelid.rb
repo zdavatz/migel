@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Model::Migelid -- migel -- 06.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Model::Migelid -- migel -- 28.09.2011 -- mhatakeyama@ywesee.com
 
 # This is necessary for a drb client connection from ch.oddb.org
 # because ODDB::Migel::Product@items is a Hash, not an Array.
@@ -58,7 +58,7 @@ module Migel
         mi
       end
       def localized_name(language)
-        self
+        self.name.send(language)
       end
       def structural_ancestors(app)
         # This is necessary for the snapback links of view class in migel DRb client (oddb.org/src/view/migel/product.rb)
