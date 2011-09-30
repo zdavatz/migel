@@ -25,14 +25,21 @@ module Migel
         name.to_s
       end
       def localized_name(language)
+        # This is called from Google button
+        # See src/view/additional_information.rb#google_search (oddb.org) 
         self.name.send(language)
       end
-
-=begin
-      def <=>(other)
-        self.pharmacode <=> other.pharmacode
+      # The following 3 methods, name_base, commercial_forms, indication are called from twitter button
+      # See src/view/additional_information.rb#google_search (oddb.org)
+      def name_base
+        self.name.de
       end
-=end
+      def commercial_forms
+        []
+      end
+      def indication
+        nil
+      end
     end
   end
 end
