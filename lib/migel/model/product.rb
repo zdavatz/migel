@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encondig: utf-8
-# Migel::Model::Product -- migel -- 06.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Model::Product -- migel -- 30.09.2011 -- mhatakeyama@ywesee.com
 
 module Migel
   module Model
@@ -24,6 +24,10 @@ module Migel
       def to_s
         name.to_s
       end
+      def localized_name(language)
+        self.name.send(language)
+      end
+
 =begin
       def <=>(other)
         self.pharmacode <=> other.pharmacode
