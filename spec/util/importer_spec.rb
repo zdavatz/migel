@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-# Migel::Util::ImporterSpec -- migel -- 16.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Util::ImporterSpec -- migel -- 05.10.2011 -- mhatakeyama@ywesee.com
 
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
@@ -10,6 +10,7 @@ include RSpec::Mocks::Methods
 
 require 'migel/util/importer'
 require 'migel/model'
+require 'migel/util/mail'
 require 'odba'
 
 module Migel
@@ -449,6 +450,93 @@ describe Importer, "Examples" do
 
     @importer.reimport_missing_data.should == '1 migelids is updated.'
 
+  end
+  describe '#code_list' do
+    context 'default' do
+      before do
+        ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      end
+      subject {@importer.code_list('index_table_name')}
+      it {should == ['migel_code']}
+    end
+  end
+  describe '#migel_code_list' do
+    before do
+      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+    end
+    subject {@importer.migel_code_list}
+    it {should == ['migel_code']}
+  end
+  describe '#report' do
+    before do
+      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      @importer.stub(:migel_code_list).and_return(['migel_code'])
+      @importer.instance_eval do
+        @migel_codes_with_products = []
+        @migel_codes_without_products = []
+      end
+    end
+    subject {@importer.report('de')}
+    let(:expected) {
+      ["Saved file: ",
+       "Total     1 Migelids (    0 Migelids have products /     0 Migelids have no products)",
+       "Saved  Products",
+       "Save time length: ",
+       "",
+       "Migelids with products (0)",
+       "",
+       "Migelids without products (0)"]
+    }
+    it {should == expected}
+  end
+  describe '#compress' do
+    before do
+      File.stub(:mtime)
+      File.stub(:open)
+      @gz = mock('gz', 
+                 :mtime= => nil,
+                 :orig_name= => nil,
+                 :puts => nil
+                )
+      Zlib::GzipWriter.stub(:open).and_yield(@gz)
+    end
+    subject {@importer.compress('file')}
+    it {should == 'file.gz'}
+  end
+  describe '#report_save_all_products' do
+    before do
+      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      server = mock('swissindex_nonpharmad')
+      DRbObject.stub(:new).and_return(@server)
+      require 'migel/util/swissindex'
+      migelid = mock('migelid', :migel_code => '12.34.56.78.9')
+      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      record = {:pharmacode => 'pharmacode', :article_name => 'article_name'}
+      table = [record]
+      Migel::Util::Swissindex.stub(:search_migel_table).and_return(table)
+
+      writer = mock('writer', :<< => nil)
+      CSV.stub(:open).and_yield(writer)
+
+      File.stub(:mtime)
+      File.stub(:open)
+      @gz = mock('gz', 
+                 :mtime= => nil,
+                 :orig_name= => nil,
+                 :puts => nil
+                )
+      Zlib::GzipWriter.stub(:open).and_yield(@gz)
+      config = mock('config', :server_name => 'server_name')
+      Migel.stub(:config).and_return(config)
+      Mail.stub(:notify_admins_attached).and_return('notify_admins_attached')
+      @importer.stub(:migel_code_list).and_return(['migel_code'])
+      @importer.instance_eval do
+        @migel_codes_with_products = []
+        @migel_codes_without_products = []
+      end
+    end
+    subject {@importer.reported_save_all_products}
+    it {should be_a(Array)}
   end
 end # describe
 

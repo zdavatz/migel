@@ -54,6 +54,22 @@ describe Product, 'Migel::Model::Product examples' do
     @product.article_name.to_s.should == 'article_name'
     @product.article_name.de.should == 'article_name'
   end
+  describe "#localized_name" do
+    subject {@product.localized_name('de')}
+    it {should == 'article_name'}
+  end
+  describe "#name_base" do
+    subject {@product.name_base}
+    it {should == 'article_name'}
+  end
+  describe "#commercial_forms" do
+    subject {@product.commercial_forms}
+    it {should == []}
+  end
+  describe "#inidcation" do
+    subject {@product.indication}
+    it {should be_nil}
+  end
 end
 
   end # Model

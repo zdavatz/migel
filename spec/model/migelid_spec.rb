@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-# Migel::Model::MigelidSpec -- migel -- 09.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Model::MigelidSpec -- migel -- 05.10.2011 -- mhatakeyama@ywesee.com
 
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
@@ -80,8 +80,8 @@ describe Migelid, "when initialized with code #{migelid_code} (group_code: #{gro
   it "pointer should be 'pointer'" do
     @migelid.pointer.should == 'pointer'
   end
-  it "localiyed_name should be @migelid" do
-    @migelid.localized_name('language').should == @migelid
+  it "localized_name should be migelid" do
+    @migelid.localized_name('de').should == 'migelid'
   end
   it "structural_ancestors should be [group, subgroup]" do
     @migelid.structural_ancestors('app').should == [@group, @subgroup]
