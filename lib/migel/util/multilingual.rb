@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
-# enconding: utf-8
-# Migel::Util::Multilingual -- migel -- 26.08.2011 -- mhatakeyama@ywesee.com
+# encoding: utf-8
+# Migel::Util::Multilingual -- migel -- 02.12.2011 -- mhatakeyama@ywesee.com
 
 module Migel
   module Util
@@ -96,6 +96,18 @@ module Migel
           me = parent
         end
         ancestors
+      end
+      def force_encoding(code)
+        @canonical.values.each do |c|
+          if c.is_a?(String)
+            c.force_encoding(code)
+          end
+        end
+        @synonyms.each do |s|
+          if s.is_a?(String)
+            s.force_encoding(code)
+          end
+        end
       end
     end
   end

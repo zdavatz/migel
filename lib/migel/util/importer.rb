@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# enconding: utf-8
+# encoding: utf-8
 # Migel::Importer -- migel -- 20.09.2011 -- mhatakeyama@ywesee.com
 
 require 'csv'

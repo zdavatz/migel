@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
-# enconding: utf-8
-# Migel::Util::Server -- migel -- 26.09.2011 -- mhatakeyama@ywesee.com
+# encoding: utf-8
+# Migel::Util::Server -- migel -- 02.12.2011 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 
@@ -34,6 +34,52 @@ module Migel
         t.priority = priority
         @admin_threads.add(t)
         t
+      end
+      def migrate_utf8
+        # group
+        Migel::Model::Group.all.each do |group|
+          group.code.force_encoding('utf-8') if group.code
+          group.limitation_text.force_encoding('utf-8') if group.limitation_text
+          group.name.force_encoding('utf-8') if group.name
+          group.save
+        end
+
+        # subgroup
+        Migel::Model::Subgroup.all.each do |subgroup|
+          subgroup.code.force_encoding('utf-8') if subgroup.code
+          subgroup.limitation_text.force_encoding('utf-8') if subgroup.limitation_text
+          subgroup.name.force_encoding('utf-8') if subgroup.name
+          subgroup.save
+        end
+
+        # migelid
+        Migel::Model::Migelid.all.each do |migelid|
+          migelid.code.force_encoding('utf-8') if migelid.code
+          migelid.limitation_text.force_encoding('utf-8') if migelid.limitation_text
+          migelid.migelid_text.force_encoding('utf-8') if migelid.migelid_text
+          migelid.name.force_encoding('utf-8') if migelid.name
+          migelid.unit.force_encoding('utf-8') if migelid.unit
+          migelid.save
+        end
+
+        # product
+        Migel::Model::Product.all.each do |product|
+          product.pharmacode.force_encoding('utf-8') if product.pharmacode
+          product.ean_code.force_encoding('utf-8') if product.ean_code
+          product.article_name.force_encoding('utf-8') if product.article_name
+          product.companyname.force_encoding('utf-8') if product.companyname
+          product.companyean.force_encoding('utf-8') if product.companyean
+          product.size.force_encoding('utf-8') if product.size
+          product.ppha.force_encoding('utf-8') if product.ppha
+          product.ppub.force_encoding('utf-8') if product.ppub
+          product.factor.force_encoding('utf-8') if product.factor
+          product.pzr.force_encoding('utf-8') if product.pzr
+          product.status.force_encoding('utf-8') if product.status
+          product.datetime.force_encoding('utf-8') if product.datetime
+          product.stdate.force_encoding('utf-8') if product.stdate
+          product.language.force_encoding('utf-8') if product.language
+          product.save
+        end
       end
 
       # The following methods are for search
