@@ -38,7 +38,8 @@ module Migel
       end
       def update_multilingual(data, language)
         data.keys.each do |key|
-          self.send(key, true).send(language.to_s + '=', data[key])
+          #self.send(key, true).send(language.to_s + '=', data[key])
+          self.send(key).send(language.to_s + '=', data[key])
         end
         if @limitation_text
           @limitation_text.parent = self

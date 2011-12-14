@@ -163,6 +163,8 @@ module Migel
       end
     end
     def data_origin(key)
+#print "data_origins.class = "
+#p data_origins.class
       data_origins[key]
     end
     def data_origins

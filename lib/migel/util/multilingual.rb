@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Multilingual -- migel -- 02.12.2011 -- mhatakeyama@ywesee.com
+# Migel::Util::Multilingual -- migel -- 26.08.2011 -- mhatakeyama@ywesee.com
 
 module Migel
   module Util

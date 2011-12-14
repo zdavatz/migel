@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 # Migel::Model::Group -- migel -- 29.08.2011 -- mhatakeyama@ywesee.com
 
 require 'migel/model/group'

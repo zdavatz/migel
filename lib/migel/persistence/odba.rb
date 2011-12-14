@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 # Migel::Persistence::ODBA -- migel -- 17.08.2011 -- mhatakeyama@ywesee.com
 
 require 'migel/config'
@@ -16,7 +17,6 @@ module Migel
     module ODBA
     end
   end
-  ODBA.storage.dbi = ODBA::ConnectionPool.new("DBI:pg:#{@config.db_name}",
-                                              @config.db_user, @config.db_auth)
+  ODBA.storage.dbi = ODBA::ConnectionPool.new("DBI:Pg:#{@config.db_name}", @config.db_user, @config.db_auth)
   ODBA.cache.setup
 end

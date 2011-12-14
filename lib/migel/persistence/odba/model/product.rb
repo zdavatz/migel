@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 # Migel::Model::Product -- migel -- 18.98.2011 -- mhatakeyama@ywesee.com
 
 require 'migel/model/product'

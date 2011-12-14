@@ -1,11 +1,13 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 02.12.2011 -- mhatakeyama@ywesee.com
+# enconding: utf-8
+# Migel::Util::Server -- migel -- 26.09.2011 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
-
 require 'migel/util/importer'
 require 'odba/drbwrapper'
+require 'odba/18_19_loading_compatibility'
+#require '/usr/lib64/ruby/site_ruby/1.8/odba/18_19_loading_compatibility'
 
 module Migel
   module Util

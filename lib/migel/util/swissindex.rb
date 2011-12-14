@@ -2,6 +2,8 @@
 # encoding: utf-8
 # Migel::Util::Swissindex -- migel -- 07.09.2011 -- mhatakeyama@ywesee.com
 
+require 'migel/ext/swissindex'
+
 module ODDB
   module Swissindex
     class SwissindexNonpharma; end

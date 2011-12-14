@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 # Migel::Util::Mail -- migel -- 19.09.2011 -- mhatakeyama@ywesee.com
 
 require 'rmail'

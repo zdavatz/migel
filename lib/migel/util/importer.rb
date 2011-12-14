@@ -214,7 +214,8 @@ class Importer
   def get_products_by_migel_code(migel_code, lang = 'de')
     lang.upcase!
     products = if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
-                 migel_code = migelid.migel_code.split('.').to_s
+                 #migel_code = migelid.migel_code.split('.').to_s
+                 migel_code = migelid.migel_code.split('.').join
                  if table = Migel::Util::Swissindex.search_migel_table(migel_code, lang)
                    table.select{|record| record[:pharmacode] and record[:article_name]}
                  end
@@ -325,7 +326,8 @@ class Importer
     total = File.readlines(file_name).to_a.length
     count = 0
     # update cache
-    CSV.open(file_name, 'r') do |line|
+    #CSV.open(file_name, 'r') do |line|
+    CSV.foreach(file_name) do |line|
       count += 1
       migel_code = line[0]
       if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
