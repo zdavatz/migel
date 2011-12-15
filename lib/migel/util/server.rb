@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# enconding: utf-8
-# Migel::Util::Server -- migel -- 26.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 15.12.2011 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -81,6 +80,31 @@ module Migel
           product.stdate.force_encoding('utf-8') if product.stdate
           product.language.force_encoding('utf-8') if product.language
           product.save
+        end
+      end
+      # after migrate_utf8
+      # this ran on Ruby 1.8.6 to get dates from the old database
+      def output_migel_code_and_date(file = 'migelcode_date.dat')
+        open(file, "w") do |out|
+          Migel::Model::Migelid.all.each do |migelid|
+            if migelid.date
+              out.print migelid.migel_code, ",", migelid.date.strftime("%Y-%m-%d"), "\n"
+            else
+              out.print migelid.migel_code, ",\n"
+            end
+          end
+        end
+      end
+      # this ran on Ruby 1.9.3 to update dates in the new database
+      def update_migelid_date(file = 'migelcode_date.dat')
+        File.readlines(file).each do |line|
+          item = line.chomp.split(/,/)
+          migel_code = item[0]
+          date = item[1]
+          if date and migelids[migel_code]
+            migelids[migel_code].date = Date.parse(date)
+            migelids[migel_code].save
+          end
         end
       end
 
