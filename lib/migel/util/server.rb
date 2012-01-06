@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 15.12.2011 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -35,6 +35,9 @@ module Migel
         t.priority = priority
         @admin_threads.add(t)
         t
+      end
+      def unpeer_cache cache
+        ODBA.unpeer cache
       end
       def migrate_utf8
         # group

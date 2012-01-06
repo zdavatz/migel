@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Importer -- migel -- 20.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Importer -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
 
 require 'csv'
 require 'fileutils'
@@ -139,6 +139,7 @@ class Importer
     end
     migelid.subgroup = subgroup
     migelid.save
+    migelid.limitation_text(true)
     multilingual_data = {
       :name            => name,
       :migelid_text    => migelid_text,
