@@ -6,7 +6,7 @@ require 'rmail'
 require 'net/smtp'
 require 'migel/config'
 require 'migel/util/smtp_tls'
-require 'tmail'
+require 'mail'
 require 'base64'
 
 module Migel
@@ -31,24 +31,27 @@ module Migel
         recipients = config.admins
 
         # Main part
-        mail = TMail::Mail.new
+        mail = ::Mail.new
         mail.subject = subject
         mail.date = Time.now
         mail.mime_version = '1.0'
 
         # Text part
-        text = TMail::Mail.new
-        text.set_content_type('text', 'plain', 'charset'=>'UTF-8')
+        text = ::Mail.new
+        text.content_type('text/html; charset=UTF-8')
         text.body = lines.join("\n")
         mail.parts.push text
 
         # File part
-        attach = TMail::Mail.new
-        attach.body = Base64.encode64 File.read(file)
-#        attach.set_content_type('image','jpg','name' => file)
-        attach.set_content_disposition('attachment', 'filename' => File.basename(file))
-        attach.transfer_encoding = 'base64'
-        mail.parts.push attach
+        if file
+          attach = ::Mail.new
+#          attach.body = Base64.encode64 File.read(file)
+#          attach.set_content_type('image','jpg','name' => file)
+#          attach.set_content_disposition('attachment', 'filename' => File.basename(file))
+          attach.add_file(file)
+#          attach.transfer_encoding = 'base64'
+          mail.parts.push attach
+        end
 
         sendmail(mail.encoded, config.smtp_user, recipients)
       end

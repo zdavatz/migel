@@ -5,6 +5,8 @@
 require 'csv'
 require 'fileutils'
 require 'zlib'
+require 'migel/util/mail'
+require 'migel/util/swissindex'
 
 module Migel
   module Util
@@ -181,7 +183,7 @@ class Importer
   ensure
     subject = lines[0]
     #Mail.notify_admins(subject, lines)
-    Mail.notify_admins_attached(subject, lines, compressed_file)
+    Migel::Util::Mail.notify_admins_attached(subject, lines, compressed_file)
   end
   def compress(file)
     compressed_filename = file + '.gz'
