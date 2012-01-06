@@ -1,18 +1,15 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Admin -- migel -- 17.08.2011 -- mhatakeyama@ywesee.com 
+# Admin -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com 
 
 $0 = "migel (Admin-Tool)"
 
 $:.push(File.expand_path('../lib', File.dirname(__FILE__)))
 
-$KCODE = 'u'
-
 require 'drb'
 require 'sbsm/drb'
 require 'migel'
 require 'migel/config'
-require 'encoding/character/utf-8'
 require 'readline'
 include Readline
 
