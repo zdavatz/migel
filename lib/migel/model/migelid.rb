@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Model::Migelid -- migel -- 28.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Model::Migelid -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
 
 # This is necessary for a drb client connection from ch.oddb.org
 # because ODDB::Migel::Product@items is a Hash, not an Array.
@@ -39,7 +39,9 @@ module Migel
       def update_multilingual(data, language)
         data.keys.each do |key|
           #self.send(key, true).send(language.to_s + '=', data[key])
-          self.send(key).send(language.to_s + '=', data[key])
+          if self.send(key)
+            self.send(key).send(language.to_s + '=', data[key])
+          end
         end
         if @limitation_text
           @limitation_text.parent = self
