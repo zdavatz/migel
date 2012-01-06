@@ -1,0 +1,18 @@
+#!/usr/local/bin/ruby
+# must be scheduled in crontab to run as the same user as oddb
+
+$: << File.expand_path('../lib', File.dirname(__FILE__))
+$: << File.expand_path('..', File.dirname(__FILE__))
+
+require 'migel/util/job'
+require 'migel/util/importer'
+
+module Migel
+  module Util
+    Job.run do |system|
+      Importer.new.update('data/csv/migel_de.csv','de')
+      Importer.new.update('data/csv/migel_fr.csv','fr')
+      system.init_fulltext_index_tables
+    end
+  end
+end
