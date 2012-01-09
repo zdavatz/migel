@@ -110,7 +110,7 @@ module Migel
           end
         end
       end
-      def export_all_products(file_name = 'data/csv/migel_all_products_de.csv', lang = 'de')
+      def export_products(file_name = '/var/www/migel/data/csv/migel_all_products_de.csv', lang = 'de')
         CSV.open(file_name, 'w') do |writer|
           all_products.values.sort_by{|prod| prod.migel_code}.each do |product|
             writer << [
@@ -132,6 +132,10 @@ module Migel
             ]
           end
         end
+      end
+      def export_all_products
+        export_products('/var/www/migel/data/csv/migel_all_products_de.csv', 'de')
+        export_products('/var/www/migel/data/csv/migel_all_products_fr.csv', 'fr')
       end
 
       # The following methods are for search
