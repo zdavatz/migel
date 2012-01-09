@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 09.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -107,6 +107,29 @@ module Migel
           if date and migelids[migel_code]
             migelids[migel_code].date = Date.parse(date)
             migelids[migel_code].save
+          end
+        end
+      end
+      def export_all_products(file_name = 'data/csv/migel_all_products_de.csv', lang = 'de')
+        CSV.open(file_name, 'w') do |writer|
+          all_products.values.sort_by{|prod| prod.migel_code}.each do |product|
+            writer << [
+              product.migel_code,
+              product.pharmacode,
+              product.ean_code,
+              product.article_name.send(lang),
+              product.companyname.send(lang),
+              product.companyean,
+              product.ppha,
+              product.ppub,
+              product.factor,
+              product.pzr,
+              product.size.send(lang),
+              product.status,
+              product.datetime,
+              product.stdate,
+              product.language,
+            ]
           end
         end
       end
