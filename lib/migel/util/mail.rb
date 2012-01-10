@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Mail -- migel -- 19.09.2011 -- mhatakeyama@ywesee.com
+# Migel::Util::Mail -- migel -- 10.01.2012 -- mhatakeyama@ywesee.com
 
 require 'rmail'
 require 'net/smtp'
@@ -38,18 +38,14 @@ module Migel
 
         # Text part
         text = ::Mail.new
-        text.content_type('text/html; charset=UTF-8')
+        text.content_type('text/plain; charset=UTF-8')
         text.body = lines.join("\n")
         mail.parts.push text
 
         # File part
         if file
           attach = ::Mail.new
-#          attach.body = Base64.encode64 File.read(file)
-#          attach.set_content_type('image','jpg','name' => file)
-#          attach.set_content_disposition('attachment', 'filename' => File.basename(file))
           attach.add_file(file)
-#          attach.transfer_encoding = 'base64'
           mail.parts.push attach
         end
 
