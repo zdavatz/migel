@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 09.01.2012 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 10.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -165,7 +165,10 @@ module Migel
           if sortvalue.to_sym == :ppub
             item.ppub.to_f
           else
-            item.send(sortvalue).to_s
+            begin
+              item.send(sortvalue).to_s
+            rescue NoMethodError
+            end
           end
         end
         if reverse
