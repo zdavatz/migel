@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 12.01.2012 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 13.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -141,6 +141,7 @@ module Migel
       # The following methods are for search
       public
       def migelid_index_keys(lang, len=1)
+        lang = 'de' unless (lang.to_s == 'de' or lang.to_s == 'fr')
         ODBA.cache.index_keys("migel_model_migelid_name_#{lang}", len)
       end
       def group
