@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 13.01.2012 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 19.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -160,6 +160,9 @@ module Migel
         # search order
         # 1. Group, Subgroup, Migelid name fulltext search
         # 2. Group, Subgroup, Migelid name prefix search
+        if lang.to_s != 'de' and lang.to_s != 'fr'
+          lang = 'de'
+        end
         search_migelid_fulltext(query, lang) or search_migelid_by_name(query, lang) 
       end
       def sort_select_products(products, sortvalue, reverse = nil)
@@ -212,6 +215,9 @@ module Migel
       public
       def search_migel_product(query, lang, sortvalue = nil, reverse = nil)
         # search product by fulltext search
+        if lang.to_s != 'de' and lang.to_s != 'fr'
+          lang = 'de'
+        end
         index_table_name = 'migel_product_fulltext_index_' + lang
         result = ODBA.cache.retrieve_from_index(index_table_name, query)
         products = unless result.empty?
