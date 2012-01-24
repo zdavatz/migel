@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Model::SuperModel -- migel -- 10.10.2011 -- mhatakeyama@ywesee.com
+# Migel::Model::SuperModel -- migel -- 24.01.2012 -- mhatakeyama@ywesee.com
 
 require 'fixes/singular'
 require 'facet/module/basename'
@@ -189,6 +189,13 @@ module Migel
     end
     def pointer
       'pointer'
+    end
+    def method_missing(meth, *args, &block)
+      if meth.to_s =~ /^[a-z]{2}$/
+        name.de
+      else
+        super(meth, *args, &block)
+      end
     end
   end
 end
