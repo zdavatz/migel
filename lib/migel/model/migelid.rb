@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Model::Migelid -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
+# Migel::Model::Migelid -- migel -- 31.01.2012 -- mhatakeyama@ywesee.com
 
 # This is necessary for a drb client connection from ch.oddb.org
 # because ODDB::Migel::Product@items is a Hash, not an Array.
@@ -32,6 +32,8 @@ module Migel
       end
 			def migel_code
 				[ subgroup.migel_code, code ].join('.')
+        rescue
+          ''
 			end
       def parent(app = nil)
         @subgroup
