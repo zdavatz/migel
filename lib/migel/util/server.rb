@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Util::Server -- migel -- 19.01.2012 -- mhatakeyama@ywesee.com
+# Migel::Util::Server -- migel -- 31.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
 require 'migel/util/importer'
@@ -11,6 +11,7 @@ require 'odba/18_19_loading_compatibility'
 module Migel
   module Util
     class Server < SBSM::DRbServer
+      GC.disable 
       def _admin(src, result, priority=0)
         t = Thread.new {
           Thread.current.abort_on_exception = false
