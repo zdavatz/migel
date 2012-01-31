@@ -11,7 +11,6 @@ require 'odba/18_19_loading_compatibility'
 module Migel
   module Util
     class Server < SBSM::DRbServer
-      GC.disable 
       def _admin(src, result, priority=0)
         t = Thread.new {
           Thread.current.abort_on_exception = false
