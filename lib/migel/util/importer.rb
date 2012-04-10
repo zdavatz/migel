@@ -177,6 +177,7 @@ class Importer
     ]
     save_all_products(@csv_file, lang, estimate)
     compressed_file = compress(@csv_file)
+    historicize(compressed_file)
     lines.concat report(lang)
   rescue Exception => err
     lines.push(err.class.to_s, err.message, *err.backtrace)
@@ -185,6 +186,13 @@ class Importer
     subject = lines[0]
     #Mail.notify_admins(subject, lines)
     Migel::Util::Mail.notify_admins_attached(subject, lines, compressed_file)
+  end
+  def historicize(filepath)
+    archive_path = File.expand_path('../../../data', File.dirname(__FILE__))
+    save_dir = File.join archive_path, 'csv'
+    FileUtils.mkdir_p save_dir
+    archive = Date.today.strftime(filepath.gsub(/\.csv\.gz/,"-%Y.%m.%d.csv.gz"))
+    FileUtils.cp(filepath, archive)
   end
   def compress(file)
     compressed_filename = file + '.gz'
@@ -201,7 +209,6 @@ class Importer
       "Saved file: #{@csv_file}",
       sprintf("Total %5i Migelids (%5i Migelids have products / %5i Migelids have no products)", migel_code_list.length, @migel_codes_with_products.length, @migel_codes_without_products.length),
       "Saved #{@saved_products} Products",
-      "Save time length: #{@save_time_length}",
     ].concat([
       '',
       "Migelids with products (#{@migel_codes_with_products.length})" 
