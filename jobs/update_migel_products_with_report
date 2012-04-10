@@ -11,7 +11,7 @@ module Migel
   module Util
     Job.run do |system|
       Importer.new.reported_save_all_products('migel_product_de.csv', 'de', true)
-      Importer.new.reoprted_save_all_products('migel_product_fr.csv', 'fr', true)
+      Importer.new.reported_save_all_products('migel_product_fr.csv', 'fr', true)
       Importer.new.import_all_products_from_csv('data/csv/migel_product_de.csv', 'de', true)
       Importer.new.import_all_products_from_csv('data/csv/migel_product_fr.csv', 'fr', true)
       system.init_fulltext_index_tables

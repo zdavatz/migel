@@ -31,7 +31,7 @@ module Migel
       total      = @migel_codes.length
       CSV.open(file_name, 'w') do |writer|
         SWISSINDEX_NONPHARMA_SERVER.session(ODDB::Swissindex::SwissindexNonpharma) do |swissindex|
-          if swissindex.download_all
+          if swissindex.download_all(lang)
             @migel_codes.each_with_index do |migel_code, count|
               product_flag = false
               if migelid = get_migelid_by_migel_code(migel_code)
