@@ -1,12 +1,13 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
+# Migel::Importer -- migel -- 10.04.2012 -- yasaka@ywesee.com
 # Migel::Importer -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
 
 require 'csv'
 require 'fileutils'
 require 'zlib'
 require 'migel/util/mail'
-require 'migel/util/swissindex'
+require 'migel/plugin/swissindex'
 
 module Migel
   module Util
@@ -213,18 +214,6 @@ class Importer
       "http://ch.oddb.org/#{lang}/gcc/migel_search/migel_product/#{migel_code}"
     })
   end
-
-  def get_products_by_migel_code(migel_code, lang = 'de')
-    lang.upcase!
-    products = if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
-                 #migel_code = migelid.migel_code.split('.').to_s
-                 migel_code = migelid.migel_code.split('.').join
-                 if table = Migel::Util::Swissindex.search_migel_table(migel_code, lang)
-                   table.select{|record| record[:pharmacode] and record[:article_name]}
-                 end
-               end
-    products
-  end
   def code_list(index_table_name, output_filename = nil)
     list = ODBA.cache.index_keys(index_table_name)
     if output_filename
@@ -280,48 +269,9 @@ class Importer
     migel_codes.length.to_s + ' migelids is updated.'
   end
   def save_all_products(file_name = 'migel_products_de.csv', lang = 'de', estimate = false)
-    @saved_products = 0
-    @migel_codes_with_products = []
-    @migel_codes_without_products = []
-    lang.upcase!
-    start_time = Time.now
-    migel_codes = migel_code_list
-    total = migel_codes.length
-    CSV.open(file_name, 'w') do |writer|
-      migel_codes.each_with_index do |migel_code, count|
-        product_flag = false
-        get_products_by_migel_code(migel_code, lang).each do |record|
-          writer << [
-            migel_code,
-            record[:pharmacode],
-            record[:ean_code],
-            record[:article_name],
-            record[:companyname],
-            record[:companyean],
-            record[:ppha],
-            record[:ppub],
-            record[:factor],
-            record[:pzr],
-            record[:size],
-            record[:status],
-            record[:datetime],
-            record[:stdate],
-            record[:language],
-          ]
-          @saved_products += 1
-          product_flag = true
-        end
-        if product_flag
-          @migel_codes_with_products << migel_code
-        else
-          @migel_codes_without_products << migel_code
-        end
-        time = estimate_time(start_time, total, count+1) 
-        #puts estimate_time(start_time, total, count+1) if estimate
-        @save_time_length = time.split(':')[1].split(' ')[0,2].join(' ')
-        puts time if estimate
-      end # migel_codes
-    end # CSV
+    plugin = Migel::SwissindexNonpharmaPlugin.new(migel_code_list)
+    @saved_products, @migel_codes_with_products, @migel_codes_without_products =
+      plugin.save_all_products(file_name, lang, estimate)
   end
   def import_all_products_from_csv(file_name = 'migel_products_de.csv', lang = 'de', estimate = false)
     lang.upcase!
