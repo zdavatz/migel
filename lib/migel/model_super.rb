@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
+# Migel::Model::SuperModel -- migel -- 02.10.2012 -- yasaka@ywesee.com
 # Migel::Model::SuperModel -- migel -- 24.01.2012 -- mhatakeyama@ywesee.com
 
 require 'fixes/singular'
@@ -171,17 +172,18 @@ module Migel
       @data_origins ||= {}
     end
     def delete
-      # This does not work as we expect
-      self.class.predicates.each { |predicate|
+      item = self.dup
+      item.class.predicates.each { |predicate|
         predicate.execute(:delete, self)
       }
-      self
+      item
     end
     def save
-      self.class.predicates.each { |predicate|
+      item = self.dup
+      item.class.predicates.each { |predicate|
         predicate.execute(:save, self)
       }
-      self
+      item
     end
     def update_limitation_text(str, language)
       limitation_text(true).send(language.to_s + '=', str)
