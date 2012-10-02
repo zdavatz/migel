@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
+# Migel::Model::Migelid -- migel -- 02.10.2012 -- yasaka@ywesee.com
 # Migel::Model::Migelid -- migel -- 31.01.2012 -- mhatakeyama@ywesee.com
 
 # This is necessary for a drb client connection from ch.oddb.org
@@ -48,7 +49,12 @@ module Migel
         end
       end
       def full_description(lang = 'de')
-        [subgroup.group.name.send(lang)||'', subgroup.name.send(lang)||'', name.send(lang), (migelid_text and migelid_text.send(lang) or '')].join(' ')
+        [
+          subgroup.group.name.send(lang)||'',
+          subgroup.name.send(lang)||'',
+          name.send(lang),
+          (migelid_text and migelid_text.send(lang) or '')
+        ].map{ |text| text.force_encoding('utf-8') }.join(' ')
       end
       def add_accessory(acc)
         accessories.push(acc)

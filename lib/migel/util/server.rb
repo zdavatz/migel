@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
+# Migel::Util::Server -- migel -- 02.10.2012 -- yasaka@ywesee.com
 # Migel::Util::Server -- migel -- 31.01.2012 -- mhatakeyama@ywesee.com
 
 require 'sbsm/drbserver'
@@ -306,8 +307,8 @@ module Migel
         end
         ODBA.cache.create_index(yaml_index_definition, Migel)
         source = instance_eval(yaml_index_definition.init_source)
-        #puts "source.size: #{source.size}"
-        ODBA.cache.fill_index(yaml_index_definition.index_name, source)
+        puts "source.size: #{source.size}"
+        ODBA.cache.fill_index(index_name, source)
       end
       def rebuild_fulltext_index_tables
         # migel_fulltext_index_de
@@ -315,7 +316,7 @@ module Migel
         # migel_product_fulltext_index_de
         # migel_product_fulltext_index_fr
         index_definition_migel_de = YAML.load <<-EOD
---- !ruby/object:ODBA::IndexDefinition 
+--- !ruby/object:ODBA::IndexDefinition
 index_name: 'migel_fulltext_index_de'
 origin_klass: 'Migel::Model::Migelid'
 target_klass: 'Migel::Model::Migelid'
@@ -328,7 +329,7 @@ dictionary: 'german'
 EOD
 
         index_definition_migel_fr = YAML.load <<-EOD
---- !ruby/object:ODBA::IndexDefinition 
+--- !ruby/object:ODBA::IndexDefinition
 index_name: 'migel_fulltext_index_fr'
 origin_klass: 'Migel::Model::Migelid'
 target_klass: 'Migel::Model::Migelid'
@@ -341,7 +342,7 @@ dictionary: 'french'
 EOD
 
         index_definition_migel_product_de = YAML.load <<-EOD
---- !ruby/object:ODBA::IndexDefinition 
+--- !ruby/object:ODBA::IndexDefinition
 index_name: 'migel_product_fulltext_index_de'
 origin_klass: 'Migel::Model::Product'
 target_klass: 'Migel::Model::Product'
@@ -354,7 +355,7 @@ dictionary: 'german'
 EOD
 
         index_definition_migel_product_fr = YAML.load <<-EOD
---- !ruby/object:ODBA::IndexDefinition 
+--- !ruby/object:ODBA::IndexDefinition
 index_name: 'migel_product_fulltext_index_fr'
 origin_klass: 'Migel::Model::Product'
 target_klass: 'Migel::Model::Product'
