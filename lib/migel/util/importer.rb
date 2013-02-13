@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Migel::Importer -- migel -- 10.04.2012 -- yasaka@ywesee.com
+# Migel::Importer -- migel -- 13.02.2012 -- yasaka@ywesee.com
 # Migel::Importer -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
 
 require 'csv'
@@ -11,8 +11,7 @@ require 'migel/plugin/swissindex'
 
 module Migel
   module Util
-
-def estimate_time(start_time, total, count)
+def estimate_time(start_time, total, count, lb="\n")
   estimate = (Time.now - start_time) * total / count
   log = count.to_s + " / " + total.to_s + "\t"
   em   = estimate/60
@@ -28,10 +27,11 @@ def estimate_time(start_time, total, count)
   end
   log << " It will be done in: "
   if rh > 1.0
-    log << "%.2f" % rh + " [h]\n"
+    log << "%.2f" % rh + " [h]"
   else
-    log << "%.2f" % rm + " [m]\n"
+    log << "%.2f" % rm + " [m]"
   end
+  log << lb
   log
 end
 class Importer
@@ -296,7 +296,6 @@ class Importer
                    else
                      '' # skip
                    end
-      puts migel_code
       if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
         record = {
           :pharmacode   => line[1],
@@ -316,8 +315,10 @@ class Importer
         }
         update_product(migelid, record, lang)
         pharmacode_list.delete(line[1])
+        puts "updating: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
+      else
+        puts "ignoring: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
       end
-      puts "updating: " + estimate_time(start_time, total, count) if estimate
     end
 
     # update database
@@ -333,8 +334,10 @@ class Importer
           product.save
         end
         migelid.save
+        puts "saving: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
+      else
+        puts "ignoring: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
       end
-      puts "saving: " + estimate_time(start_time, total, count) if estimate
     end
 
     # delete process
