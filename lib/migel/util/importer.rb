@@ -286,10 +286,17 @@ class Importer
     total = File.readlines(file_name).to_a.length
     count = 0
     # update cache
-    #CSV.open(file_name, 'r') do |line|
-    CSV.foreach(file_name) do |line|
+    CSV.foreach(file_name, 'r:utf-8') do |line|
       count += 1
-      migel_code = line[0]
+      line[0] = line[0].rjust(9, '0') if line[0] =~ /^\d{8}$/
+      migel_code = if line[0] =~ /^\d{9}$/
+                     line[0].split(/(\d\d)/).select{|x| !x.empty?}.join('.')
+                   elsif line[0] = /^(\d\d)\.(\d\d)\.(\d\d)\.(\d\d)\.(\d)$/
+                     line[0]
+                   else
+                     '' # skip
+                   end
+      puts migel_code
       if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
         record = {
           :pharmacode   => line[1],
@@ -317,9 +324,11 @@ class Importer
     count = 0
     start_time = Time.new
     total = migel_code_list.length
-    migel_code_list.each do |migel_code|
+    codes = migel_code_list.dup
+    codes.each do |migel_code|
       count += 1
       if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
+        migelid = migelid.dup
         migelid.products.each do |product|
           product.save
         end

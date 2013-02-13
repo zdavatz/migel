@@ -29,7 +29,7 @@ module Migel
       lang.upcase!
       start_time = Time.now
       total      = @migel_codes.length
-      CSV.open(file_name, 'w') do |writer|
+      CSV.open(file_name, 'w:utf-8') do |writer|
         SWISSINDEX_NONPHARMA_SERVER.session(ODDB::Swissindex::SwissindexNonpharma) do |swissindex|
           if swissindex.download_all(lang)
             @migel_codes.each_with_index do |migel_code, count|
