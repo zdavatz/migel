@@ -6,7 +6,7 @@ $: << File.expand_path('../../lib', File.dirname(__FILE__))
 require 'rspec'
 require 'rspec/mocks'
 require 'rspec/autorun'
-include RSpec::Mocks::Methods
+#include RSpec::Mocks::Methods
 
 require 'migel/model'
 require 'migel/util/server'
@@ -112,14 +112,14 @@ describe Server, "Examples" do
     Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
     @server.migelids.stub(:odba_store)
     @server.init_migelids
-    @server.migelids.should == {'migel_code', migelid}
+    @server.migelids.should == {'migel_code' => migelid}
   end
   it "clear_migelids should clear @migelids hash variable" do
     ODBA.cache.stub(:fetch_named).and_return({})
     @server.migelids.stub(:odba_store)
     migelid = double('migelid', :migel_code => 'migel_code')
     @server.migelids.store(migelid.migel_code, migelid)
-    @server.migelids.should == {'migel_code', migelid}
+    @server.migelids.should == {'migel_code' => migelid}
     @server.clear_migelids
     @server.migelids.should == {}
   end
@@ -134,14 +134,14 @@ describe Server, "Examples" do
     Migel::Model::Product.stub(:find_by_pharmacode).and_return(product)
     @server.products.stub(:odba_store)
     @server.init_products
-    @server.products.should == {'pharmacode', product}
+    @server.products.should == {'pharmacode' => product}
   end
   it "clear_products should clear @products hash variable" do
     ODBA.cache.stub(:fetch_named).and_return({})
     @server.products.stub(:odba_store)
     product = double('product', :pharmacode => 'pharmacode')
     @server.products.store(product.pharmacode, product)
-    @server.products.should == {'pharmacode', product}
+    @server.products.should == {'pharmacode' => product}
     @server.clear_products
     @server.products.should == {}
   end

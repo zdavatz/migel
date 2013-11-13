@@ -9,7 +9,7 @@ require 'rspec/autorun'
 require 'flexmock'
 require 'drb'
 
-include RSpec::Mocks::Methods
+#include RSpec::Mocks::Methods
 include FlexMock::TestCase
 
 module Migel
