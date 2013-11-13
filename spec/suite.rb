@@ -4,6 +4,8 @@
 require 'find'
 
 here = File.dirname(__FILE__)
+require 'simplecov'; 
+SimpleCov.start;
 
 $: << here
 

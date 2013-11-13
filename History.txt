@@ -1,0 +1,4 @@
+
+=== 1.0.0 / December 14, 2011
+
+* migel released for Ruby 1.9

@@ -2,11 +2,11 @@
 # Migel::Util::ImporterSpec -- migel -- 05.10.2011 -- mhatakeyama@ywesee.com
 
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
-
+require 'yaml'
 require 'rspec'
 require 'rspec/mocks'
 require 'rspec/autorun'
-include RSpec::Mocks::Methods
+#include RSpec::Mocks::Methods
 
 require 'migel/util/importer'
 require 'migel/model'
