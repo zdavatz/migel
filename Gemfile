@@ -10,6 +10,7 @@ gem 'mechanize'
 gem "dbi", "0.4.5", :git => 'https://github.com/zdavatz/ruby-dbi.git'
 gem 'deprecated'
 gem 'sbsm'
+gem 'pg' # for running bin/migeld
 
 group :development, :test do
   gem 'flexmock'

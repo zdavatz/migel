@@ -59,6 +59,7 @@ GEM
     nori (1.1.5)
     ntlm-http (0.1.1)
     odba (1.1.0)
+    pg (0.17.0)
     polyglot (0.3.3)
     pry (0.9.12.3)
       coderay (~> 1.0)
@@ -119,6 +120,7 @@ DEPENDENCIES
   mail
   mechanize
   odba
+  pg
   pry-debugger
   rake
   rclconf
