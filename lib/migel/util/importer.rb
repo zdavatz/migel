@@ -349,7 +349,7 @@ class Importer
     lang.upcase!
     if migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
       migel_code = migelid.migel_code.split('.').to_s
-      if table = Migel::Util::Swissindex.search_migel_table(migel_code, lang)
+      if table = ODDB::Swissindex.search_migel_table(migel_code, lang)
         table.each do |record|
           if record[:pharmacode] and record[:article_name]
             update_product(migelid, record, lang)

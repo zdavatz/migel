@@ -1,14 +1,13 @@
 source "http://rubygems.org"
 
-gem 'facets'
+gem 'facets', '< 2.0.0'
 gem 'odba'
-gem 'rmail'
 gem 'rclconf'
 gem 'mail'
 gem 'savon'
 gem 'mechanize'
 gem "dbi", "0.4.5", :git => 'https://github.com/zdavatz/ruby-dbi.git'
-gem 'deprecated'
+gem 'deprecated', '< 3.0.0'
 gem 'sbsm'
 gem 'pg' # for running bin/migeld
 
@@ -20,7 +19,7 @@ group :development, :test do
   gem 'simplecov'
   gem 'hoe'
   gem 'rspec'
-  gem 'rspec-mocks'
+  gem 'rspec-mocks', '< 3.0.0'
   gem 'travis-lint'
 end
 
