@@ -36,9 +36,8 @@ GEM
       rubyntlm (~> 0.3.2)
     interception (0.5)
     json (1.8.1)
-    mail (2.5.4)
-      mime-types (~> 1.16)
-      treetop (~> 1.4.8)
+    mail (2.6.1)
+      mime-types (>= 1.16, < 3)
     mechanize (2.7.2)
       domain_name (~> 0.5, >= 0.5.1)
       http-cookie (~> 1.0.0)
@@ -60,7 +59,6 @@ GEM
     ntlm-http (0.1.1)
     odba (1.1.0)
     pg (0.17.1)
-    polyglot (0.3.4)
     pry (0.9.12.6)
       coderay (~> 1.0)
       method_source (~> 0.8)
@@ -81,7 +79,6 @@ GEM
     rclconf (1.0.0)
     rdoc (4.1.1)
       json (~> 1.4)
-    rmail (1.0.0)
     rspec (3.0.0)
       rspec-core (~> 3.0.0)
       rspec-expectations (~> 3.0.0)
@@ -111,9 +108,6 @@ GEM
       simplecov-html (~> 0.8.0)
     simplecov-html (0.8.0)
     slop (3.5.0)
-    treetop (1.4.15)
-      polyglot
-      polyglot (>= 0.3.1)
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.6)
@@ -147,7 +141,6 @@ DEPENDENCIES
   pry-stack_explorer
   rclconf
   rdoc
-  rmail
   rspec
   savon
   sbsm

@@ -2,7 +2,6 @@ source "https://rubygems.org"
 
 gem 'facets', '= 1.8.54'
 gem 'odba'
-gem 'rmail'
 gem 'rclconf'
 gem 'mail'
 gem 'savon'

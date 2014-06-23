@@ -2,7 +2,6 @@
 # encoding: utf-8
 # Migel::Util::Mail -- migel -- 10.01.2012 -- mhatakeyama@ywesee.com
 
-require 'rmail'
 require 'net/smtp'
 require 'migel/config'
 require 'migel/util/smtp_tls'
