@@ -6,7 +6,7 @@ install:
   - bundle install --without debugger
 
 script:
-  - rspec spec/suite.rb
+  - bundle exec rspec spec/suite.rb
 
 notifications:
   email:
