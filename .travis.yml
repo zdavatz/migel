@@ -3,20 +3,18 @@ before_install:
   - gem install bundler
 
 install:
-  - bundle install
+  - bundle install --without debugger
 
 script:
-  - rspec spec/suite.rb
+  - bundle exec rspec spec/suite.rb
 
 notifications:
   email:
   - ngiger@ywesee.com
 rvm:
   - ruby-head
-  - 2.0.0
+  - 2.1.2
   - 1.9.3
-  - 1.8.7
 matrix:
   allow_failures:
     - rvm: ruby-head
-    - rvm: 1.8.7

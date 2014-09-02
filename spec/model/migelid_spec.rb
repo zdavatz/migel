@@ -101,7 +101,7 @@ describe Migelid, "when limitation_text is updated" do
     @subgroup.migelids << @migelid
     @migelid.subgroup = @subgroup
     data = {:limitation_text => limitation_text}
-    #@migelid.update_limitation_text(limitation_text, language)
+    @migelid.update_limitation_text(limitation_text, language)
     @migelid.update_multilingual(data, language)
   end
   it "limitation_text.de should be '#{limitation_text}'" do

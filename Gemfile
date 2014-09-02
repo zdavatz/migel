@@ -1,13 +1,13 @@
 source "https://rubygems.org"
 
-gem 'facets', '= 1.8.54'
+gem 'facets', '< 2.0.0'
 gem 'odba'
 gem 'rclconf'
 gem 'mail'
-gem 'savon'
+gem 'savon', '0.9.7'
 gem 'mechanize'
 gem "dbi", "0.4.5", :git => 'https://github.com/zdavatz/ruby-dbi.git'
-gem 'deprecated', '2.0.1'
+gem 'deprecated', '< 3.0.0'
 gem 'sbsm'
 gem 'pg' # for running bin/migeld
  
@@ -16,14 +16,11 @@ group :development do
   gem 'flexmock'
   gem 'webmock'
   gem 'simplecov'
-  gem 'hoe', '>= 3.4'
-  gem 'rdoc'
- end
+  gem 'hoe'
+  gem 'rspec-mocks', '< 3.0.0'
+  gem 'travis-lint'
+end
 
 group :debugger do
-  gem 'pry'
-  gem 'pry-nav'
-  gem 'pry-rescue'
-  gem 'pry-stack_explorer'
-  gem 'pry-doc'
+  gem 'pry-debugger', :platforms => [:ruby_19, :ruby_20]
 end

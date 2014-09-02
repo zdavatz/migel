@@ -7,7 +7,24 @@ require 'sbsm/drbserver'
 require 'migel/util/importer'
 require 'odba/drbwrapper'
 require 'odba/18_19_loading_compatibility'
-#require '/usr/lib64/ruby/site_ruby/1.8/odba/18_19_loading_compatibility'
+#another monkey patch for CSV
+class CSV
+	puts "Attention: monkey-patching CSV::Cell"
+  # deprecated
+  class Cell < String
+		@@first = false
+    def initialize(data = "", is_null = false)
+			unless @@first
+				$stderr.puts "Attention: monkey-patching CSV::Cell used by #{caller.join('\n')}"
+				@@first = true
+			end
+      super(is_null ? "" : data)
+    end
+    def data
+      to_s
+    end
+  end
+end
 
 module Migel
   module Util
