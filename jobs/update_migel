@@ -10,8 +10,7 @@ require 'migel/util/importer'
 module Migel
   module Util
     Job.run do |system|
-      Importer.new.update(File.expand_path('../../data/csv/migel_de.csv', __FILE__), 'de')
-      Importer.new.update(File.expand_path('../../data/csv/migel_fr.csv', __FILE__), 'fr')
+      Importer.new.update_all
       system.init_fulltext_index_tables
     end
   end

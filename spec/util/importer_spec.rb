@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# encoding: utf-8
 # Migel::Util::ImporterSpec -- migel -- 05.10.2011 -- mhatakeyama@ywesee.com
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
 require 'yaml'
@@ -11,6 +12,7 @@ require 'migel/util/importer'
 require 'migel/model'
 require 'migel/util/mail'
 require 'odba'
+require 'mail'
 
 module Migel
   module Util
@@ -266,23 +268,6 @@ describe Importer, "Examples" do
     File.stub(:open).and_yield(file)
     @importer.unimported_migel_code_list('unimported_migel_code_list.dat').should == ['migel_code']
   end
-  it "save_all_products should save all the products data into a file" do
-    ODBA.cache.stub(:index_keys).and_return(['migel_code'])
-    server = double('swissindex_nonpharmad')
-    DRbObject.stub(:new).and_return(@server)
-    require 'migel/ext/swissindex'
-    migelid = double('migelid',:migel_code => '12.34.56.78.9')
-    Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
-    record = {:pharmacode => 'pharmacode', :article_name => 'article_name'}
-    table = [record]
-    ODDB::Swissindex.stub(:search_migel_table).and_return(table)
-
-    writer = double('writer', :<< => nil)
-    CSV.stub(:open).and_yield(writer)
-
-    pending("Don't know how to make it pass")
-    @importer.save_all_products.should == ['migel_code']
-  end
   describe 'update_product example' do
     before(:each) do
       multilingual = double('multilingual', :de= => nil)
@@ -368,15 +353,23 @@ describe Importer, "Examples" do
       line = ['migel_code', 'pharmacode', 'ean_code', 'article_name']
       CSV.stub(:open).and_yield(line)
       migelid = double('migelid',
-                     :products => [@product],
                      :migel_code => 'migel_code',
-                     :save => nil
+                     :add_product => @product,
+                     :save => nil,
+                     :products => [@product],
                     )
+      migelid2 = double('migelid2',
+                     :migel_code => 'migel_code',
+                     :add_product => @product,
+                     :save => nil,
+                     :delete => nil,
+                     :products => [@product],
+                    )
+      migelid.stub(:dup).with().and_return(migelid2)
+      @product.stub(:delete)
       Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
-      product = double('product',:delete => 'delete')
-      Migel::Model::Product.stub(:find_by_pharmacode).and_return(product)
+      Migel::Model::Product.stub(:find_by_pharmacode).and_return(@product)
       ODBA.cache.stub(:index_keys).and_return(['code'])
-      pending("Don't know how to make it pass")
       @importer.import_all_products_from_csv.should == ['code']
     end
   end
@@ -526,6 +519,74 @@ describe Importer, "Examples" do
     it {should be_a(Array)}
   end
 end # describe
+
+  describe 'RealWorld: create 3 language specific CSV files from the given xls file' do
+    before(:each) do
+      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      multilingual = double('multilingual', :de => '')
+      product = double('product',:article_name => multilingual)
+      migelid = double('migelid',:products => [product])
+      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+    end
+
+    def setup_importer
+      @importer = Migel::Util::Importer.new
+      @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL2014_v2.xls'))
+      File.exists?(@test_file).should be true
+      File.size(@test_file).should < 30000
+      @server = Migel::Util::Server.new
+      allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
+      migelid = double('migelid',:migel_code => '12.34.56.78.9', :delete => true)
+      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      group = double('group',
+                    :name => 'name',
+                    :update_limitation_text => nil,
+                    :save => nil
+                    )
+      Migel::Model::Group.stub(:find_by_code)
+      @importer.data_dir.should_not be_nil
+      FileUtils.rm(Dir.glob(File.join(@importer.data_dir, '*')))
+    end
+
+    it "missing_article_name_migel_code_list should return missing migel code list" do
+      setup_importer
+      Migel::Util::Importer::OriginalXLS = @test_file
+      @importer.update_all
+      @importer.xls_file.should match /MiGeL.xls/
+      Dir.glob(File.join(@importer.data_dir, '*.csv')).size.should  == 3
+      baseNames = Dir.glob(File.join(@importer.data_dir, '*.csv')).collect{ |f| File.basename(f) }
+      { 'migel_de.csv' => 
+          'Produktegruppe Nr,Limitation Produktegruppe,Produktegruppe,Beschreibung Produktegruppe,Kategorie Nr,Limitation Kategorie,Kategorie,Beschreibung Kategorie,Revision Kaegorie,Revision Kat Gültig ab,Unterkategorie Nr,Limitation Unterkategorie,Unterkategorie,Positions Nummer,Limitation,Bezeichnung,Menge,Einheit,Höchstvergütungsbetrag,Revision Position,Revision Gültig ab',
+        'migel_fr.csv' => 
+          'Groupe de produits No,Limitation Groupe de produits,Groupe de produits,Description Groupes de produits,Catégorie No,Limitation Catégorie,Catégorie,Description Catégorie,Revision Catégorie,Valable à partir du (Revision Catégorie),Sous-catégorie No,Limitation Sous-catégorie,Sous-catégorie,No pos.,Limitation,Dénomination,Quantité,Unité de mesure,Montant,Revision,Valable à partir du',
+        'migel_it.csv' => 
+          'Gruppi di prodotti No,Limitazione (Gruppi di prodotti),Gruppi di prodotti,Descrizione,Categoria No,Limitazione (Categoria),Categoria,Descrizione Categoria,Revisione Categoria,Valida a partire dal (Revisione Categoria),Sotto-categoria No,Limitazione Sotto-categoria,Sotto-categoria,Numero di posizione,Limitazione,Denominazione,Quantita,Unità,Importo Massimo,Revisione,Valida a partire dal',
+      }.each {
+        |csv_file, firstline|
+        baseNames.index(csv_file).should_not == nil
+        lines=IO.readlines(File.join(@importer.data_dir, csv_file))
+        # puts "#{csv_file} has  #{lines.size} zeilen"
+        lines[1].should match /^01.,/
+        lines[6].should match /^34.,/
+        lines[6].should match /,34\.60\.01\.00\.1,/
+        lines.size.should == 9
+        lines.first.chomp.should == firstline
+      }
+      @importer.update_all
+      Dir.glob(File.join(@importer.data_dir, '*.csv')).size.should  == 3
+    end
+
+    it "save_all_products_all_languages should work fine and send a correct email"  do
+      setup_importer
+      ::Mail.defaults do
+        delivery_method :test
+      end
+      Migel::Util::Importer::OriginalXLS = @test_file
+      @importer.save_all_products_all_languages
+      ::Mail::TestMailer.deliveries.size.should == 3
+      ::Mail::TestMailer.deliveries.each{ |mail| mail.to_s.should_not match /RuntimeError/ }
+    end
+  end
 
   end # Util
 end # Migel

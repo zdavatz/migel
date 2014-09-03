@@ -6,29 +6,21 @@ $: << File.expand_path('../../lib', File.dirname(__FILE__))
 require 'rspec'
 require 'rspec/mocks'
 require 'rspec/autorun'
-require 'flexmock'
 require 'drb'
-
-#include RSpec::Mocks::Methods
-include FlexMock::TestCase
+require 'migel/plugin/swissindex'
 
 module Migel
   module Util
     module Swissindex
 
 describe Swissindex, "ODDB::Swissindex examples" do
-  before(:all) do
-    @server = flexmock('swissindex_nonpharmad')
-    DRbObject.stub(:new).and_return(@server)
-    require 'migel/ext/swissindex'
-    swissindex = flexmock('swissindex', :search_migel_table => ['table'])
-    @server.should_receive(:session).and_yield(swissindex)
-  end
   it "search_migel_table should return an array of hash" do
-    SWISSINDEX_NONPHARMA_URI    = 'druby://localhost:50002'
-    pending("Don't know how to make it pass")
-    Migel::SwissindexNonpharmaPlugin::SWISSINDEX_NONPHARMA_SERVER.should be_instance_of(FlexMock)
-    ODDB::Swissindex.search_migel_table('migel_code', 'de').should == ['table']
+    expected = ['table']
+    @server = Migel::SwissindexNonpharmaPlugin.new(expected)
+    allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
+    DRbObject.stub(:new).and_return(@server)
+    Migel::Model::Migelid.stub(:find_by_migel_code).and_return(expected)
+    @server.get_migelid_by_migel_code('migel_code', 'de').should == expected
   end
 end
 

@@ -205,7 +205,6 @@ EOD
   it "_admin should return method result in the argument 'result' (Array)" do
     result = []
     @server._admin('self.class', result)
-    pending("Don't know how to make it pass")
     result.should == ['Migel::Util::Server']
     result = []
     @server._admin('"a"*201', result)
@@ -213,7 +212,6 @@ EOD
   end
   it "_admin should return error message when StandardError happens during the method execution" do
     result = []
-    pending("Don't know how to make it pass")
     @server._admin('Server.hogehoge', result)
     result.should == ["undefined method `hogehoge' for Migel::Util::Server:Class"]
   end

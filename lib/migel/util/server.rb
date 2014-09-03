@@ -41,18 +41,19 @@ module Migel
               str
             end.to_s
           rescue StandardError => error
-            result << error.message
-            #require 'pp'
-            Migel.logger.error('admin') { error.class }
-            Migel.logger.error('admin') { error.message }
-            Migel.logger.error('admin') { error.backtrace.pretty_inspect }
+            result << (error ? error.message : 'no msg')
+            if Migel.logger
+              Migel.logger.error('admin') { error.class }
+              Migel.logger.error('admin') { error.message }
+              Migel.logger.error('admin') { error.backtrace.pretty_inspect }
+            end
             error
           end
         }
         t[:source] = src
         t.priority = priority
         @admin_threads.add(t)
-        t
+        t.join
       end
       def unpeer_cache cache
         ODBA.unpeer cache
@@ -324,7 +325,6 @@ module Migel
         end
         ODBA.cache.create_index(yaml_index_definition, Migel)
         source = instance_eval(yaml_index_definition.init_source)
-        puts "source.size: #{source.size}"
         ODBA.cache.fill_index(index_name, source)
       end
       def rebuild_fulltext_index_tables

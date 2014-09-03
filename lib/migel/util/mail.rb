@@ -11,53 +11,32 @@ require 'base64'
 module Migel
   module Util
     module Mail
-      def Mail.notify_admins(subject, lines)
+      def Mail.notify_admins_attached(subj, lines, file)
+        @@configured ||= false
         config = Migel.config
-        recipients = config.admins
-        mpart = RMail::Message.new
-        header = mpart.header
-        header.to = recipients
-        header.from = config.mail_from
-        header.subject = subject
-        header.date = Time.now
-        header.add('Content-Type', 'text/plain', nil, 
-                   'charset' => config.mail_charset)
-        mpart.body = lines.join("\n")
-        sendmail(mpart, config.smtp_user, recipients)
-      end
-      def Mail.notify_admins_attached(subject, lines, file)
-        config = Migel.config
-        recipients = config.admins
-
-        # Main part
-        mail = ::Mail.new
-        mail.subject = subject
-        mail.date = Time.now
-        mail.mime_version = '1.0'
-
-        # Text part
-        text = ::Mail.new
-        text.content_type('text/plain; charset=UTF-8')
-        text.body = lines.join("\n")
-        mail.parts.push text
-
-        # File part
-        if file
-          attach = ::Mail.new
-          attach.add_file(file)
-          mail.parts.push attach
+        config.admins << Etc.getlogin if config.admins.size == 0
+        config.mail_from ||=  Etc.getlogin
+        unless ::Mail.delivery_method.is_a?(::Mail::TestMailer) and not @@configured
+          ::Mail.defaults do
+            delivery_method :smtp, {
+              :address => config.smtp_server,
+              :port => config.smtp_port,
+              :domain => config.smtp_domain,
+              :user_name => config.smtp_user,
+              :password => config.smtp_pass,
+              :authentication => config.smtp_authtype,
+            }
+          end
+          @@configured = true
         end
-
-        sendmail(mail.encoded, config.smtp_user, recipients)
-      end
-      def Mail.sendmail(mpart, from, recipients)
-        config = Migel.config
-        Net::SMTP.start(config.smtp_server, config.smtp_port,
-                        config.smtp_domain, config.smtp_user, config.smtp_pass,
-                        config.smtp_authtype) do |smtp|
-          recipients.each { |recipient|
-            smtp.sendmail(mpart.to_s, from, recipient)
-          }
+        :: Mail.deliver do
+          subject subj
+          from    config.mail_from
+          to      config.admins 
+          body    lines.join("\n")
+          if file
+            add_file :filename => File.basename(file), :content => File.read(file)
+          end
         end
       end
     end

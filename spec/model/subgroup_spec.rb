@@ -62,7 +62,7 @@ describe Subgroup, "when initialized with code #{subgroup_code} (group_code: #{g
     @subgroup.product_text.should be_nil
   end
   it "respond_to? should have two arguments" do
-    @subgroup.respond_to?(:name, 'hogehoge').should be_true
+    @subgroup.respond_to?(:name, 'hogehoge').should be true
   end
 end
 

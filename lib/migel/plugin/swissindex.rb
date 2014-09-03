@@ -4,6 +4,7 @@
 # Migel::Util::Swissindex          -- migel -- 07.09.2011 -- mhatakeyama@ywesee.com
 
 require 'migel/ext/swissindex' # for dRuby
+require 'migel/model'
 
 module ODDB
   module Swissindex
@@ -13,6 +14,7 @@ end
 
 module Migel
   class SwissindexNonpharmaPlugin
+    attr_reader :migel_codes_with_products, :migel_codes_without_products
     SWISSINDEX_NONPHARMA_URI    = 'druby://localhost:50002'
     SWISSINDEX_NONPHARMA_SERVER = DRbObject.new(nil, SWISSINDEX_NONPHARMA_URI)
     include Migel::Util
@@ -23,10 +25,10 @@ module Migel
       Migel::Model::Migelid.find_by_migel_code(migel_code)
     end
     def save_all_products(file_name = 'migel_products_de.csv', lang = 'de', estimate = false)
-      saved_products = 0
-      migel_codes_with_products    = []
-      migel_codes_without_products = []
-      lang.upcase!
+      @saved_products = 0
+      @migel_codes_with_products    = []
+      @migel_codes_without_products = []
+      lang = lang.upcase
       start_time = Time.now
       total      = @migel_codes.length
       CSV.open(file_name, 'w:utf-8') do |writer|
@@ -57,15 +59,15 @@ module Migel
                       record[:stdate],
                       record[:language],
                     ]
-                    saved_products += 1
+                    @saved_products += 1
                     product_flag = true
                   end
                 end
               end
               if product_flag
-                migel_codes_with_products << migel_code
+                @migel_codes_with_products << migel_code
               else
-                migel_codes_without_products << migel_code
+                @migel_codes_without_products << migel_code
               end
               time = estimate_time(start_time, total, count + 1) 
               puts time if estimate
@@ -77,8 +79,8 @@ module Migel
         end # SWISSINDEX_NONPHARMA_SERVER
       end # CSV.open
       return [
-        saved_products,
-        migel_codes_with_products,
+        @saved_products,
+        @migel_codes_with_products,
         migel_codes_without_products
       ]
     end

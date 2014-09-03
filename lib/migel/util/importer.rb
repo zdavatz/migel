@@ -8,8 +8,16 @@ require 'fileutils'
 require 'zlib'
 require 'migel/util/mail'
 require 'migel/plugin/swissindex'
+require 'spreadsheet'
+require 'open-uri'
+require 'migel/util/server'
 
 module Migel
+  LANGUAGE_NAMES = { 'de' => 'MiGeL',
+      'fr' => 'LiMA',
+      'it' => 'EMAp',
+                  }
+
   module Util
 def estimate_time(start_time, total, count, lb="\n")
   estimate = (Time.now - start_time) * total / count
@@ -35,6 +43,9 @@ def estimate_time(start_time, total, count, lb="\n")
   log
 end
 class Importer
+	attr_reader :data_dir
+	attr_reader :xls_file
+	OriginalXLS = 'https://github.com/zdavatz/oddb2xml_files/raw/master/MiGeL.xls'
   SALE_TYPES = {
     '1' => :purchase,
     '2' => :rent,
@@ -43,6 +54,7 @@ class Importer
   def initialize
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
     FileUtils.mkdir_p @data_dir
+		@xls_file = File.join(@data_dir, File.basename(OriginalXLS))
   end
   def date_object(date)
     date = date.to_s.split(".")
@@ -51,6 +63,35 @@ class Importer
     end
   end
 
+  def update_all
+    base = File.basename(@xls_file, '.xls')
+    xls = File.open(@xls_file, 'wb+')
+    open(OriginalXLS) {|f| xls.write(f.read ) }
+    xls.close
+    actContent = File.read(@xls_file)
+
+    latest = File.join(@data_dir, base + '-latest.xls')
+    target = File.join(@data_dir, "#{base}-#{Time.now.strftime('%Y.%m.%d')}.xls")
+    if !File.exist?(target) or File.read(target) != actContent
+      FileUtils.cp(@xls_file, target, :verbose => true, :preserve => true)
+    end
+    if File.exist?(latest) && File.read(latest) == actContent
+      return
+    end
+    book = Spreadsheet.open @xls_file
+    LANGUAGE_NAMES.each{
+        |language, name|
+      sheet = book.worksheet(name)
+      csv_name = File.join(@data_dir, "migel_#{language}.csv")
+      CSV.open(csv_name, 'w') do |writer|
+        sheet.rows.each do |row|
+          writer << row
+        end
+      end
+      update(csv_name, language) #   unless defined?(RSpec)
+    }
+    FileUtils.mv(@xls_file, latest, :verbose => true)
+  end
   # for import groups, subgroups, migelids
   def update(path, language)
     # update Group, Subgroup, Migelid data from a csv file
@@ -169,9 +210,17 @@ class Importer
     migelid
   end
 
+  def save_all_products_all_languages(options = {:report => false, :estimate => false})
+    LANGUAGE_NAMES.each {
+      |language, name|
+        file_name = File.join(@data_dir, "migel_products_#{language}.csv")
+        reported_save_all_products(file_name, language, options[:estimate])
+    }
+  end
+
   # for import products
   def reported_save_all_products(file_name = 'migel_products_de.csv', lang = 'de', estimate = false)
-    @csv_file = File.join(@data_dir, file_name)
+    @csv_file = File.join(@data_dir, File.basename(file_name))
     lines = [
       sprintf("%s: %s %s#reported_save_all_products(#{lang})", Time.now.strftime('%c'), Migel.config.server_name, self.class)
     ]
@@ -184,7 +233,6 @@ class Importer
     lines.concat report
   ensure
     subject = lines[0]
-    #Mail.notify_admins(subject, lines)
     Migel::Util::Mail.notify_admins_attached(subject, lines, compressed_file)
   end
   def historicize(filepath)
@@ -204,22 +252,29 @@ class Importer
     compressed_filename
   end
   def report(lang = 'de')
-    lang = lang.downcase
-    [
+      lang = lang.downcase
+    res = [
       "Saved file: #{@csv_file}",
-      sprintf("Total %5i Migelids (%5i Migelids have products / %5i Migelids have no products)", migel_code_list.length, @migel_codes_with_products.length, @migel_codes_without_products.length),
+      sprintf("Total %5i Migelids (%5i Migelids have products / %5i Migelids have no products)",
+              migel_code_list               ? migel_code_list.length : 0,
+              @migel_codes_with_products    ? @migel_codes_with_products.length : 0,
+              @migel_codes_without_products ? @migel_codes_without_products.length : 0),
       "Saved #{@saved_products} Products",
-    ].concat([
+    ]
+    res += [
       '',
-      "Migelids with products (#{@migel_codes_with_products.length})" 
-    ]).concat(@migel_codes_with_products.sort.map{|migel_code|
+      "Migelids with products (#{@migel_codes_with_products ? @migel_codes_with_products.length : 0})"
+    ]
+    res += @migel_codes_with_products.sort.map{|migel_code|
       "http://ch.oddb.org/#{lang}/gcc/migel_search/migel_product/#{migel_code}"
-    }).concat([
+    } if @migel_codes_with_products
+    res += [
       '',
-      "Migelids without products (#{@migel_codes_without_products.length})" 
-    ]).concat(@migel_codes_without_products.sort.map{|migel_code|
-      "http://ch.oddb.org/#{lang}/gcc/migel_search/migel_product/#{migel_code}"
-    })
+      "Migelids without products (#{@migel_codes_without_products ? @migel_codes_without_products.length : 0})"
+    ]
+    res[-1] += @migel_codes_without_products.sort.map{|migel_code|
+      "http://ch.oddb.org/#{lang}/gcc/migel_search/migel_product/#{migel_code}"}.to_s if @migel_codes_without_products and @migel_codes_without_products.size > 0
+    res
   end
   def code_list(index_table_name, output_filename = nil)
     list = ODBA.cache.index_keys(index_table_name)
@@ -235,12 +290,14 @@ class Importer
       index_table_name = 'migel_model_migelid_migel_code'
       code_list(index_table_name, output_filename)
     end
+    @migel_code_list ||= []
   end
   def pharmacode_list(output_filename = nil)
     @pharmacode_list ||= begin
       index_table_name = 'migel_model_product_pharmacode'
       code_list(index_table_name, output_filename)
     end
+    @pharmacode_list ||= []
   end
   def unimported_migel_code_list(output_filename = nil)
     migel_codes = migel_code_list.select do |migel_code|
@@ -291,7 +348,7 @@ class Importer
       line[0] = line[0].rjust(9, '0') if line[0] =~ /^\d{8}$/
       migel_code = if line[0] =~ /^\d{9}$/
                      line[0].split(/(\d\d)/).select{|x| !x.empty?}.join('.')
-                   elsif line[0] = /^(\d\d)\.(\d\d)\.(\d\d)\.(\d\d)\.(\d)$/
+                   elsif line[0] =~ /^(\d\d)\.(\d\d)\.(\d\d)\.(\d\d)\.(\d)$/
                      line[0]
                    else
                      '' # skip
