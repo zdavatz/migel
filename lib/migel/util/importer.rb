@@ -118,11 +118,11 @@ class Importer
     migel_code_list.each do |migel_code|
       case migel_code.length
       when 2
-        Migel::Model::Group.find_by_migel_code(migel_code).delete
+        Migel::Model::Group.find_by_migel_code(migel_code).delete if Migel::Model::Group.find_by_migel_code(migel_code)
       when 5
-        Migel::Model::Subgroup.find_by_migel_code(migel_code).delete
+        Migel::Model::Subgroup.find_by_migel_code(migel_code).delete if Migel::Model::Subgroup.find_by_migel_code(migel_code)
       else
-        Migel::Model::Migelid.find_by_migel_code(migel_code).delete
+        Migel::Model::Migelid.find_by_migel_code(migel_code).delete if Migel::Model::Migelid.find_by_migel_code(migel_code)
       end
     end
   end
