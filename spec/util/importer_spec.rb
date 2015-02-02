@@ -461,7 +461,8 @@ describe Importer, "Examples" do
     end
     subject {@importer.report('de')}
     let(:expected) {
-      ["Saved file: ",
+      ["Total time to update: 0.00 [m]",
+       "Saved file: ",
        "Total     1 Migelids (    0 Migelids have products /     0 Migelids have no products)",
        "Saved  Products", "",
        "Migelids with products (0)", "",
@@ -517,6 +518,16 @@ describe Importer, "Examples" do
     end
     subject {@importer.reported_save_all_products}
     it {should be_a(Array)}
+    subject {@importer.report('de')}
+    let(:expected) {
+      ["Total time to update: 0.00 [m]",
+       "Saved file: ",
+       "Total     1 Migelids (    0 Migelids have products /     0 Migelids have no products)",
+       "Saved  Products", "",
+       "Migelids with products (0)", "",
+       "Migelids without products (0)"]
+    }
+    it {should == expected}
   end
 end # describe
 

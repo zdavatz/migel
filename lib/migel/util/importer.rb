@@ -55,6 +55,7 @@ class Importer
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
     FileUtils.mkdir_p @data_dir
 		@xls_file = File.join(@data_dir, File.basename(OriginalXLS))
+    @start_time = Time.now
   end
   def date_object(date)
     date = date.to_s.split(".")
@@ -78,14 +79,18 @@ class Importer
     if File.exist?(latest) && File.read(latest) == actContent
       return
     end
+    puts "#{Time.now}: update_all #{@xls_file} taken from #{OriginalXLS}"
     book = Spreadsheet.open @xls_file
     LANGUAGE_NAMES.each{
         |language, name|
       sheet = book.worksheet(name)
       csv_name = File.join(@data_dir, "migel_#{language}.csv")
+      idx = 0
       CSV.open(csv_name, 'w') do |writer|
         sheet.rows.each do |row|
           writer << row
+          idx += 1
+          puts "#{Time.now}: update_all #{@xls_file} at row #{idx}" if idx % 500 == 0
         end
       end
       update(csv_name, language) #   unless defined?(RSpec)
@@ -94,6 +99,7 @@ class Importer
   end
   # for import groups, subgroups, migelids
   def update(path, language)
+    puts "#{Time.now}: update #{path} #{language}"
     # update Group, Subgroup, Migelid data from a csv file
     CSV.readlines(path)[1..-1].each do |row|
       id = row.at(13).to_s.split('.')
@@ -128,6 +134,7 @@ class Importer
   end
   def update_group(id, row, language)
     groupcd = id.at(0)
+    puts "#{Time.now}: update_group #{id} groupcd #{groupcd} #{language}"
     group = Migel::Model::Group.find_by_code(groupcd) || Migel::Model::Group.new(groupcd)
     group.name.send(language.to_s + '=', row.at(2).to_s)
     text = row.at(3).to_s
@@ -240,9 +247,11 @@ class Importer
     save_dir = File.join archive_path, 'csv'
     FileUtils.mkdir_p save_dir
     archive = Date.today.strftime(filepath.gsub(/\.csv\.gz/,"-%Y.%m.%d.csv.gz"))
+    puts "#{Time.now}: historicize #{filepath} -> #{archive}"
     FileUtils.cp(filepath, archive)
   end
   def compress(file)
+    puts "#{Time.now}: compress #{file}"
     compressed_filename = file + '.gz'
     Zlib::GzipWriter.open(compressed_filename, Zlib::BEST_COMPRESSION) do |gz|
       gz.mtime = File.mtime(file)
@@ -252,8 +261,11 @@ class Importer
     compressed_filename
   end
   def report(lang = 'de')
-      lang = lang.downcase
+    lang = lang.downcase
+    end_time = Time.now - @start_time
+    @update_time = (end_time / 60.0).to_i
     res = [
+      "Total time to update: #{"%.2f" % @update_time} [m]",
       "Saved file: #{@csv_file}",
       sprintf("Total %5i Migelids (%5i Migelids have products / %5i Migelids have no products)",
               migel_code_list               ? migel_code_list.length : 0,

@@ -25,6 +25,7 @@ module Migel
       Migel::Model::Migelid.find_by_migel_code(migel_code)
     end
     def save_all_products(file_name = 'migel_products_de.csv', lang = 'de', estimate = false)
+      puts "#{Time.now}: save_all_products #{file_name}"
       @saved_products = 0
       @migel_codes_with_products    = []
       @migel_codes_without_products = []
@@ -35,6 +36,7 @@ module Migel
         SWISSINDEX_NONPHARMA_SERVER.session(ODDB::Swissindex::SwissindexNonpharma) do |swissindex|
           if swissindex.download_all(lang)
             @migel_codes.each_with_index do |migel_code, count|
+              puts "#{Time.now}: save_all_products migel_code #{migel_code} count #{count}"
               product_flag = false
               if migelid = get_migelid_by_migel_code(migel_code)
                 migel_code = migelid.migel_code.split('.').join
@@ -42,6 +44,7 @@ module Migel
                 unless table.empty?
                   products = table.select{ |record| record[:pharmacode] and record[:article_name] }
                   products.each do |record|
+                    puts "#{Time.now}: save_all_products 2: migel_code #{migel_code} pharmacode #{record[:pharmacode]}"
                     writer << [
                       migel_code,
                       record[:pharmacode],
@@ -81,7 +84,7 @@ module Migel
       return [
         @saved_products,
         @migel_codes_with_products,
-        migel_codes_without_products
+        @migel_codes_without_products
       ]
     end
   end
