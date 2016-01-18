@@ -4,10 +4,7 @@
 
 
 module Migel
-  VERSION = '1.0.0'
-#  Migel_VERSION =
-#    File.read(File.expand_path('../.git/refs/heads/master',
-#                               File.dirname(__FILE__)))
+  VERSION = '1.0.1'
   class << self
     attr_accessor :config, :logger, :persistence, :server
   end

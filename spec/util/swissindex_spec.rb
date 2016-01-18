@@ -16,7 +16,7 @@ module Migel
 describe Swissindex, "ODDB::Swissindex examples" do
   it "search_migel_table should return an array of hash" do
     expected = ['table']
-    @server = Migel::SwissindexNonpharmaPlugin.new(expected)
+    @server = Migel::SwissindexMigelPlugin.new(expected)
     allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
     DRbObject.stub(:new).and_return(@server)
     Migel::Model::Migelid.stub(:find_by_migel_code).and_return(expected)

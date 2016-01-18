@@ -14,9 +14,9 @@ module ODDB
     def Swissindex.session(type = SwissindexPharma)
       yield(type.new)
     end
-class SwissindexNonpharma # definition only
-  URI = 'druby://localhost:50002'
-  include DRb::DRbUndumped
-end
+    class SwissindexMigel # definition only
+      URI = 'druby://localhost:50002'
+      include DRb::DRbUndumped
+    end
   end # Swissindex
 end # ODDB

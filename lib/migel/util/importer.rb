@@ -345,7 +345,7 @@ class Importer
     migel_codes.length.to_s + ' migelids is updated.'
   end
   def save_all_products(file_name = 'migel_products_de.csv', lang = 'de', estimate = false)
-    plugin = Migel::SwissindexNonpharmaPlugin.new(migel_code_list)
+    plugin = Migel::SwissindexMigelPlugin.new(migel_code_list)
     @saved_products, @migel_codes_with_products, @migel_codes_without_products =
       plugin.save_all_products(file_name, lang, estimate)
   end
