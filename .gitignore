@@ -2,3 +2,6 @@
 vendor/
 pkg/
 coverage/
+*.bak
+*~
+

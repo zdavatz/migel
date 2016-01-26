@@ -21,7 +21,7 @@ module Migel
   module Util
 def estimate_time(start_time, total, count, lb="\n")
   estimate = (Time.now - start_time) * total / count
-  log = count.to_s + " / " + total.to_s + "\t"
+  log = '%3d' % count.to_s + " / " + total.to_s + "\t"
   em   = estimate/60
   eh   = em/60
   rest = estimate - (Time.now - start_time)
@@ -53,6 +53,7 @@ class Importer
   }
   def initialize
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
+    $stdout.sync = true
     FileUtils.mkdir_p @data_dir
 		@xls_file = File.join(@data_dir, File.basename(OriginalXLS))
     @start_time = Time.now
@@ -218,11 +219,14 @@ class Importer
   end
 
   def save_all_products_all_languages(options = {:report => false, :estimate => false})
-    LANGUAGE_NAMES.each {
+    LANGUAGE_NAMES.each do
       |language, name|
         file_name = File.join(@data_dir, "migel_products_#{language}.csv")
         reported_save_all_products(file_name, language, options[:estimate])
-    }
+        unless defined?(RSpec)
+          raise "Trying to save emtpy (or too small) #{file_name}" unless File.exist?(file_name) && File.size(file_name) > 1024
+        end
+    end
   end
 
   # for import products
@@ -247,7 +251,7 @@ class Importer
     save_dir = File.join archive_path, 'csv'
     FileUtils.mkdir_p save_dir
     archive = Date.today.strftime(filepath.gsub(/\.csv\.gz/,"-%Y.%m.%d.csv.gz"))
-    puts "#{Time.now}: historicize #{filepath} -> #{archive}"
+    puts "#{Time.now}: historicize #{filepath} -> #{archive}. Size is #{File.size(filepath)}"
     FileUtils.cp(filepath, archive)
   end
   def compress(file)

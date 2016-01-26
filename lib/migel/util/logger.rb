@@ -7,6 +7,14 @@ require 'logger'
 require 'migel/config'
 
 module Migel
+  DebugMigel = ENV['DEBUG_MIGEL']
+  def Migel.debug_msg(msg)
+    return unless DebugMigel
+    $stdout.puts("#{Time.now}: #{msg}"); $stdout.flush
+    @config.log_file.puts("#{Time.now}: #{msg}")
+    @config.log_file.flush
+  end
+
   log_file = @config.log_file
   if(log_file.is_a?(String))
     FileUtils.mkdir_p(File.dirname(log_file))
