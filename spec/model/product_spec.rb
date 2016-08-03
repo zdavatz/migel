@@ -4,7 +4,7 @@
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
 require 'rspec'
-require 'rspec/autorun'
+require 'spec_helper'
 require 'migel/model_super'
 require 'migel/model/group'
 require 'migel/model/subgroup'
@@ -36,39 +36,39 @@ describe Product, 'Migel::Model::Product examples' do
     @product.company_name.de = 'company_name'
   end
   it "check default values" do
-    @product.pharmacode.should == @pharmacode
+    expect(@product.pharmacode).to eq(@pharmacode)
 
-    @product.migelid.should == @migelid
-    @product.price.should == @migelid.price
-    @product.qty.should == @migelid.qty
-    @product.unit.should == @migelid.unit
-    @product.migel_code.should == @migelid.migel_code
+    expect(@product.migelid).to eq(@migelid)
+    expect(@product.price).to eq(@migelid.price)
+    expect(@product.qty).to eq(@migelid.qty)
+    expect(@product.unit).to eq(@migelid.unit)
+    expect(@product.migel_code).to eq(@migelid.migel_code)
     @product.pointer_descr == @migelid.migel_code
   end
   it "full_description should include article_name and company_name" do
-    @product.full_description('de').should == 'article_name company_name'
+    expect(@product.full_description('de')).to eq('article_name company_name')
   end
   it 'to_s should return article_name' do
-    @product.to_s.should == 'article_name'
-    @product.article_name.should == 'article_name'
-    @product.article_name.to_s.should == 'article_name'
-    @product.article_name.de.should == 'article_name'
+    expect(@product.to_s).to eq('article_name')
+    expect(@product.article_name).to eq('article_name')
+    expect(@product.article_name.to_s).to eq('article_name')
+    expect(@product.article_name.de).to eq('article_name')
   end
   describe "#localized_name" do
     subject {@product.localized_name('de')}
-    it {should == 'article_name'}
+    it {is_expected.to eq('article_name')}
   end
   describe "#name_base" do
     subject {@product.name_base}
-    it {should == 'article_name'}
+    it {is_expected.to eq('article_name')}
   end
   describe "#commercial_forms" do
     subject {@product.commercial_forms}
-    it {should == []}
+    it {is_expected.to eq([])}
   end
   describe "#inidcation" do
     subject {@product.indication}
-    it {should be_nil}
+    it {is_expected.to be_nil}
   end
 end
 

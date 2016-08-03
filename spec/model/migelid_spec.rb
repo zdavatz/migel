@@ -4,7 +4,7 @@
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
 require 'rspec'
-require 'rspec/autorun'
+require 'spec_helper'
 require 'migel/model_super'
 require 'migel/model/group'
 require 'migel/model/subgroup'
@@ -37,54 +37,54 @@ describe Migelid, "when initialized with code #{migelid_code} (group_code: #{gro
     @migelid.add_migelid(Migelid.new('777'))
   end
   it "code should be #{migelid_code}" do
-    @migelid.code.should == migelid_code
+    expect(@migelid.code).to eq(migelid_code)
   end
   it "migel_code should be #{group_code}.#{subgroup_code}.#{migelid_code}" do
-    @migelid.migel_code.should == "#{group_code}.#{subgroup_code}.#{migelid_code}"
+    expect(@migelid.migel_code).to eq("#{group_code}.#{subgroup_code}.#{migelid_code}")
   end
   it "products should be empty" do
-    @migelid.products.should be_empty
+    expect(@migelid.products).to be_empty
   end
   it "accessories[0] should be 'accessory'" do
-    @migelid.accessories.first.should == 'accessory'
+    expect(@migelid.accessories.first).to eq('accessory')
   end
   it "migelids[0].accessory[0] should be migelid" do
-    @migelid.migelids[0].accessories[0].should == @migelid
+    expect(@migelid.migelids[0].accessories[0]).to eq(@migelid)
   end
   it "parent should be a subgroup" do
-    @migelid.parent.should == @subgroup
-    @migelid.parent.should == @migelid.subgroup
+    expect(@migelid.parent).to eq(@subgroup)
+    expect(@migelid.parent).to eq(@migelid.subgroup)
   end
   it "limitation_text.to_s should be ''" do
-    @migelid.limitation_text.should be_nil
-    @migelid.limitation_text.to_s.should == ''
+    expect(@migelid.limitation_text).to be_nil
+    expect(@migelid.limitation_text.to_s).to eq('')
   end
   it "name.to_s should be 'migelid'" do
-    @migelid.name.should be_an_instance_of(Migel::Util::Multilingual)
-    @migelid.name.to_s.should == 'migelid'
+    expect(@migelid.name).to be_an_instance_of(Migel::Util::Multilingual)
+    expect(@migelid.name.to_s).to eq('migelid')
   end
   it "name.de, en should be 'migelid'" do
-    @migelid.name.de.should == 'migelid'
-    @migelid.name.en.should == 'migelid'
+    expect(@migelid.name.de).to eq('migelid')
+    expect(@migelid.name.en).to eq('migelid')
   end
   it "name.fr should be nil" do
-    @migelid.name.fr.should be_nil
+    expect(@migelid.name.fr).to be_nil
   end
   it "full_description should be 'group subgroup migelid migelid_text'" do
-    @migelid.full_description.should == 'group subgroup migelid migelid_text'
+    expect(@migelid.full_description).to eq('group subgroup migelid migelid_text')
   end
   it "products.values should be products" do
-    @migelid.products.values.should == @migelid.products
-    @migelid.products.should be_empty
+    expect(@migelid.products.values).to eq(@migelid.products)
+    expect(@migelid.products).to be_empty
   end
   it "pointer should be 'pointer'" do
-    @migelid.pointer.should == 'pointer'
+    expect(@migelid.pointer).to eq('pointer')
   end
   it "localized_name should be migelid" do
-    @migelid.localized_name('de').should == 'migelid'
+    expect(@migelid.localized_name('de')).to eq('migelid')
   end
   it "structural_ancestors should be [group, subgroup]" do
-    @migelid.structural_ancestors('app').should == [@group, @subgroup]
+    expect(@migelid.structural_ancestors('app')).to eq([@group, @subgroup])
   end
 end
 
@@ -105,16 +105,16 @@ describe Migelid, "when limitation_text is updated" do
     @migelid.update_multilingual(data, language)
   end
   it "limitation_text.de should be '#{limitation_text}'" do
-    @migelid.limitation_text.should be_an_instance_of(Migel::Util::Multilingual) 
-    @migelid.limitation_text.de.should == 'limitation text'
-    @migelid.limitation_text.to_s.should == 'limitation text'
-    @migelid.limitation_text.en.should == 'limitation text'
+    expect(@migelid.limitation_text).to be_an_instance_of(Migel::Util::Multilingual) 
+    expect(@migelid.limitation_text.de).to eq('limitation text')
+    expect(@migelid.limitation_text.to_s).to eq('limitation text')
+    expect(@migelid.limitation_text.en).to eq('limitation text')
   end
   it "limitation_text.fr should be nil" do
-    @migelid.limitation_text.fr.should be_nil
+    expect(@migelid.limitation_text.fr).to be_nil
   end
   it "limitation_text.parent should be migelid" do
-    @migelid.limitation_text.parent.should == @migelid
+    expect(@migelid.limitation_text.parent).to eq(@migelid)
   end
 end
 
@@ -132,12 +132,12 @@ describe Migelid, "when name is updated" do
     @migelid.name.fr = 'name.fr'
   end
   it "name.de should be 'name.de'" do
-    @migelid.name.de.should == 'name.de'
-    @migelid.name.en.should == 'name.de'
-    @migelid.name.fr.should == 'name.fr'
-    @migelid.de.should == 'name.de'
-    @migelid.en.should == 'name.de'
-    @migelid.fr.should == 'name.fr'
+    expect(@migelid.name.de).to eq('name.de')
+    expect(@migelid.name.en).to eq('name.de')
+    expect(@migelid.name.fr).to eq('name.fr')
+    expect(@migelid.de).to eq('name.de')
+    expect(@migelid.en).to eq('name.de')
+    expect(@migelid.fr).to eq('name.fr')
   end
 end
 

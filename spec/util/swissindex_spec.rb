@@ -5,7 +5,7 @@ $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
 require 'rspec'
 require 'rspec/mocks'
-require 'rspec/autorun'
+require 'spec_helper'
 require 'drb'
 require 'migel/plugin/swissindex'
 
@@ -18,9 +18,9 @@ describe Swissindex, "ODDB::Swissindex examples" do
     expected = ['table']
     @server = Migel::SwissindexMigelPlugin.new(expected)
     allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
-    DRbObject.stub(:new).and_return(@server)
-    Migel::Model::Migelid.stub(:find_by_migel_code).and_return(expected)
-    @server.get_migelid_by_migel_code('migel_code', 'de').should == expected
+    allow(DRbObject).to receive(:new).and_return(@server)
+    allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(expected)
+    expect(@server.get_migelid_by_migel_code('migel_code', 'de')).to eq(expected)
   end
 end
 

@@ -1,18 +1,13 @@
-# -*- ruby -*-
+#!/usr/bin/env ruby
+# encoding: utf-8
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'migel/version'
+require 'rspec/core/rake_task'
 
-require 'rubygems'
-require File.join(File.dirname(__FILE__), 'lib/migel.rb')
-require 'hoe'
-# Hoe.plugin :compiler
-# Hoe.plugin :gem_prelude_sucks
-# Hoe.plugin :inline
-# Hoe.plugin :inline
-# Hoe.plugin :minitest
-# Hoe.plugin :racc
-# Hoe.plugin :rubyforge
+RSpec::Core::RakeTask.new(:spec)
 
-Hoe.spec 'migel' do
-  license 'GPL-2'
-  developer('Yasuhiro Asaka, Zeno R.R. Davatz', 'yasaka@ywesee.com,  zdavatz@ywesee.com')
+task :spec => :clean
 
-end
+require 'rake/clean'
+CLEAN.include FileList['pkg/*.gem']

@@ -5,9 +5,7 @@ $: << File.expand_path('../../lib', File.dirname(__FILE__))
 require 'yaml'
 require 'rspec'
 require 'rspec/mocks'
-require 'rspec/autorun'
-#include RSpec::Mocks::Methods
-
+require 'spec_helper'
 require 'migel/util/importer'
 require 'migel/model'
 require 'migel/util/mail'
@@ -22,24 +20,24 @@ describe Importer, "Examples" do
     @importer = Migel::Util::Importer.new
   end
   it "estimate_time should estimate the total calculation time" do
-    Time.stub(:now).and_return(3600.0)
+    allow(Time).to receive(:now).and_return(3600.0)
     start_time = 0.0
     total = 100
     count = 30
-    expected = "30 / 100\tEstimate total: 3.33 [h] It will be done in: 2.33 [h]\n"
-    estimate_time(start_time, total, count).should == expected
+    expected = " 30 / 100\tEstimate total: 3.33 [h] It will be done in: 2.33 [h]\n"
+    expect(estimate_time(start_time, total, count)).to eq(expected)
     count = 60 
-    expected = "60 / 100\tEstimate total: 1.67 [h] It will be done in: 40.00 [m]\n"
-    estimate_time(start_time, total, count).should == expected
+    expected = " 60 / 100\tEstimate total: 1.67 [h] It will be done in: 40.00 [m]\n"
+    expect(estimate_time(start_time, total, count)).to eq(expected)
     start_time = 3500.0
     total = 10
     count = 5
-    expected = "5 / 10\tEstimate total: 3.33 [m] It will be done in: 1.67 [m]\n"
-    estimate_time(start_time, total, count).should == expected
+    expected = "  5 / 10\tEstimate total: 3.33 [m] It will be done in: 1.67 [m]\n"
+    expect(estimate_time(start_time, total, count)).to eq(expected)
   end
   it "data_object should create Data instance from Switzerland type of date string with '.'" do
     date = '31.12.2011'
-    @importer.date_object(date).should == Date.new(2011,12,31)
+    expect(@importer.date_object(date)).to eq(Date.new(2011,12,31))
   end
   it "update_group should update a Group instance when it is found in the database" do
     name  = double('name', :de= => nil)
@@ -48,12 +46,12 @@ describe Importer, "Examples" do
                    :update_limitation_text => nil,
                    :save => nil
                   )
-    Migel::Model::Group.stub(:find_by_code).and_return(group)
+    allow(Migel::Model::Group).to receive(:find_by_code).and_return(group)
 
     id  = ['groupcd']
     row = [0,1,'name','limitation text']
     language = 'de'
-    @importer.update_group(id, row, language).should == group
+    expect(@importer.update_group(id, row, language)).to eq(group)
   end
   it "update_group should create a Group instance when it is a new group data" do
     name  = double('name', :de= => nil)
@@ -62,13 +60,13 @@ describe Importer, "Examples" do
                    :update_limitation_text => nil,
                    :save => nil
                   )
-    Migel::Model::Group.stub(:find_by_code)
-    Migel::Model::Group.stub(:new).and_return(group)
+    allow(Migel::Model::Group).to receive(:find_by_code)
+    allow(Migel::Model::Group).to receive(:new).and_return(group)
 
     id  = ['groupcd']
     row = [0,1,'name','limitation text']
     language = 'de'
-    @importer.update_group(id, row, language).should == group
+    expect(@importer.update_group(id, row, language)).to eq(group)
   end
   it "update_subgroup should update a Subgroup instance when it is found in the database" do
     name  = double('name', :de= => nil)
@@ -85,7 +83,7 @@ describe Importer, "Examples" do
     row = [0,1,2,3,4,5,'name','limitation text']
     language = 'de'
     id = [0,'subgroupcd']
-    @importer.update_subgroup(id, group, row, language).should == subgroup
+    expect(@importer.update_subgroup(id, group, row, language)).to eq(subgroup)
   end
   it "update_subgroup should create a Subgroup instance when it is not found in the database" do
     group = double('group',
@@ -99,12 +97,12 @@ describe Importer, "Examples" do
                       :update_limitation_text => nil,
                       :save => nil
                      )
-    Migel::Model::Subgroup.stub(:new).and_return(subgroup)
+    allow(Migel::Model::Subgroup).to receive(:new).and_return(subgroup)
 
     id = [0, 'id']
     row = [0,1,2,3,4,5,'name','limitation text']
     language = 'de'
-    @importer.update_subgroup(id, group, row, language).should == subgroup
+    expect(@importer.update_subgroup(id, group, row, language)).to eq(subgroup)
   end
   it "update_migelid should update a Migelid instance when it is found in the database" do
     migelid = double('migelid',
@@ -130,9 +128,9 @@ describe Importer, "Examples" do
     id = [0,1,'12','34','5']
     row = [0,1,2,3,4,5,6,7,8,9,10,11,'name',13,'L','migelid text Limitation text','qty','unit','1234',19,'31.12.2011']
     language = 'de'
-    @importer.update_migelid(id, subgroup, row, language).should == migelid
+    expect(@importer.update_migelid(id, subgroup, row, language)).to eq(migelid)
     row = [0,1,2,3,4,5,6,7,8,9,10,11,'',13,'L','migelid text','qty','unit','1234',19,'31.12.2011']
-    @importer.update_migelid(id, subgroup, row, language).should == migelid
+    expect(@importer.update_migelid(id, subgroup, row, language)).to eq(migelid)
   end
   it "update_migelid should create a Migelid instance when it is not found in the database" do
     migelid = double('migelid',
@@ -156,16 +154,16 @@ describe Importer, "Examples" do
                       :update_limitation_text => nil,
                       :save => nil
                      )
-    Migel::Model::Migelid.stub(:new).and_return(migelid)
+    allow(Migel::Model::Migelid).to receive(:new).and_return(migelid)
     id = [0,1,'12','34','5']
     row = [0,1,2,3,4,5,6,7,8,9,10,11,'name',13,'L','migelid text Limitation text','qty','unit','1234',19,'31.12.2011']
     language = 'de'
-    @importer.update_migelid(id, subgroup, row, language).should == migelid
+    expect(@importer.update_migelid(id, subgroup, row, language)).to eq(migelid)
   end
   describe "update method updates group, subgroup, and migelid instances" do
     before(:each) do
       row = [0,1,2,3,4,5,6,7,8,9,10,11,'name','12.34.56.78.9','L','migelid text Limitation text','qty','unit','1234',19,'31.12.2011']
-      CSV.stub(:readlines).and_return([0,row])
+      allow(CSV).to receive(:readlines).and_return([0,row])
 
       # for migelid
       name  = double('name', :de= => nil)
@@ -203,70 +201,70 @@ describe Importer, "Examples" do
                      :migel_code => '12',
                      :delete => 'delete_group'
                     )
-      Migel::Model::Group.stub(:find_by_code).and_return(@group)
+      allow(Migel::Model::Group).to receive(:find_by_code).and_return(@group)
     end
     it "normal update" do
-      ODBA.cache.stub(:index_keys).and_return(['12', '12.34', '12.34.56.78.9'])
+      allow(ODBA.cache).to receive(:index_keys).and_return(['12', '12.34', '12.34.56.78.9'])
 
       language = 'de'
-      lambda do 
+      expect do 
         @importer.update('path', language)
-      end.should_not raise_error
-      @importer.migel_code_list.should == []
+      end.not_to raise_error
+      expect(@importer.migel_code_list).to eq([])
 
       row = [0,1,2,3,4,5,6,7,8,9,10,11,'name','12.34.56.78.9','L','migelid text Limitation text','qty','unit','1234',19,'31.12.2011']
-      CSV.stub(:readlines).and_return([0,row])
+      allow(CSV).to receive(:readlines).and_return([0,row])
       row[13] = ''
       row[4]  = '12.34.56.78.9'
-      lambda do 
+      expect do 
         @importer.update('path', language)
-      end.should_not raise_error
+      end.not_to raise_error
     end
     it "delete group" do
-      ODBA.cache.stub(:index_keys).and_return(['10', '12.34', '12.34.56.78.9'])
-      Migel::Model::Group.stub(:find_by_migel_code).and_return(@group)
+      allow(ODBA.cache).to receive(:index_keys).and_return(['10', '12.34', '12.34.56.78.9'])
+      allow(Migel::Model::Group).to receive(:find_by_migel_code).and_return(@group)
       language = 'de'
       @importer.update('path', language)
-      @importer.migel_code_list.should == ['10']
+      expect(@importer.migel_code_list).to eq(['10'])
     end
     it "delete subgroup" do
-      ODBA.cache.stub(:index_keys).and_return(['12', '12.30', '12.34.56.78.9'])
-      Migel::Model::Subgroup.stub(:find_by_migel_code).and_return(@subgroup)
+      allow(ODBA.cache).to receive(:index_keys).and_return(['12', '12.30', '12.34.56.78.9'])
+      allow(Migel::Model::Subgroup).to receive(:find_by_migel_code).and_return(@subgroup)
       language = 'de'
       @importer.update('path', language)
-      @importer.migel_code_list.should == ['12.30']
+      expect(@importer.migel_code_list).to eq(['12.30'])
     end
     it "delete migelid" do
-      ODBA.cache.stub(:index_keys).and_return(['12', '12.34', '12.34.56.78.0'])
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(@migelid)
+      allow(ODBA.cache).to receive(:index_keys).and_return(['12', '12.34', '12.34.56.78.0'])
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(@migelid)
       language = 'de'
       @importer.update('path', language)
-      @importer.migel_code_list.should == ['12.34.56.78.0']
+      expect(@importer.migel_code_list).to eq(['12.34.56.78.0'])
     end
   end
   it "migel_code_list should return migel_code list of Array" do
-    ODBA.cache.stub(:index_keys).and_return(['migel_code'])
-    @importer.migel_code_list.should == ['migel_code']
+    allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
+    expect(@importer.migel_code_list).to eq(['migel_code'])
   end
   it "migel_code_list should output migel_code list into a file" do
-    ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+    allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     file = double('out', :print => nil)
-    File.stub(:open).and_yield(file)
-    @importer.migel_code_list('migel_code_list.dat').should == ['migel_code']
+    allow(File).to receive(:open).and_yield(file)
+    expect(@importer.migel_code_list('migel_code_list.dat')).to eq(['migel_code'])
   end
   it "unimported_migel_code_list should return uniported migel_code list" do
-    ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+    allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     migelid = double('migelid',:products => [])
-    Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
-    @importer.unimported_migel_code_list.should == ['migel_code']
+    allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
+    expect(@importer.unimported_migel_code_list).to eq(['migel_code'])
   end
   it "unimported_migel_code_list should output unimported migel_code list into a file" do
-    ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+    allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     migelid = double('migelid',:products => [])
-    Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+    allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
     file = double('out', :print => nil)
-    File.stub(:open).and_yield(file)
-    @importer.unimported_migel_code_list('unimported_migel_code_list.dat').should == ['migel_code']
+    allow(File).to receive(:open).and_yield(file)
+    expect(@importer.unimported_migel_code_list('unimported_migel_code_list.dat')).to eq(['migel_code'])
   end
   describe 'update_product example' do
     before(:each) do
@@ -313,9 +311,7 @@ describe Importer, "Examples" do
       language = @language
       record = @record
       product = @product
-      @importer.instance_eval do 
-        update_product(migelid, record, language).should == product
-      end
+      expect(@importer.send(:update_product, migelid, record, language)).to eql product
     end
     it "update_product should create a Product instance when it is not found in the database" do
       migelid = double('migelid',
@@ -323,13 +319,11 @@ describe Importer, "Examples" do
                      :save     => nil
                     )
 
-      Migel::Model::Product.stub(:new).and_return(@product)
+      allow(Migel::Model::Product).to receive(:new).and_return(@product)
       language = @language
       record = @record
       product = @product
-      @importer.instance_eval do 
-        update_product(migelid, record, language).should == product
-      end
+      expect(@importer.send(:update_product, migelid, record, language)).to eql product
     end
     it "update_products_by_migel_code should update products searched by online migel server" do
       migelid = double('migelid',
@@ -337,21 +331,21 @@ describe Importer, "Examples" do
                      :migel_code => 'migel_code',
                      :save => nil
                     )
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
 
       server = double('swissindex_nonpharmad')
-      DRbObject.stub(:new).and_return(@server)
+      allow(DRbObject).to receive(:new).and_return(@server)
       require 'migel/ext/swissindex'
       record = {:pharmacode => 'pharmacode', :article_name => 'article_name'}
       table = [record]
-      ODDB::Swissindex.stub(:search_migel_table).and_return(table)
+      allow(ODDB::Swissindex).to receive(:search_migel_table).and_return(table)
     
-      @importer.update_products_by_migel_code('migel_code', 'de').should be_nil
+      expect(@importer.update_products_by_migel_code('migel_code', 'de')).to be_nil
     end
     it "import_all_products_from_csv should update products by a csv file" do
-      File.stub(:readlines).and_return(['line'])
+      allow(File).to receive(:readlines).and_return(['line'])
       line = ['migel_code', 'pharmacode', 'ean_code', 'article_name']
-      CSV.stub(:open).and_yield(line)
+      allow(CSV).to receive(:open).and_yield(line)
       migelid = double('migelid',
                      :migel_code => 'migel_code',
                      :add_product => @product,
@@ -365,34 +359,34 @@ describe Importer, "Examples" do
                      :delete => nil,
                      :products => [@product],
                     )
-      migelid.stub(:dup).with().and_return(migelid2)
-      @product.stub(:delete)
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
-      Migel::Model::Product.stub(:find_by_pharmacode).and_return(@product)
-      ODBA.cache.stub(:index_keys).and_return(['code'])
-      @importer.import_all_products_from_csv.should == ['code']
+      allow(migelid).to receive(:dup).with(no_args).and_return(migelid2)
+      allow(@product).to receive(:delete)
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
+      allow(Migel::Model::Product).to receive(:find_by_pharmacode).and_return(@product)
+      allow(ODBA.cache).to receive(:index_keys).and_return(['code'])
+      expect(@importer.import_all_products_from_csv).to eq(['code'])
     end
   end
   describe 'missing_article_name_migel_code_list' do
     before(:each) do
-      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
       multilingual = double('multilingual', :de => '')
       product = double('product',:article_name => multilingual)
       migelid = double('migelid',:products => [product])
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
     end
     it "missing_article_name_migel_code_list should return missing migel code list" do
-      @importer.missing_article_name_migel_code_list.should == ['migel_code']
+      expect(@importer.missing_article_name_migel_code_list).to eq(['migel_code'])
     end
     it "missing_article_name_migel_code_list should outout missing migel code list" do
       file = double('out', :print => nil)
-      File.stub(:open).and_yield(file)
-      @importer.missing_article_name_migel_code_list('de', 'migel_code_list.dat').should == ['migel_code']
+      allow(File).to receive(:open).and_yield(file)
+      expect(@importer.missing_article_name_migel_code_list('de', 'migel_code_list.dat')).to eq(['migel_code'])
     end
   end
   it 'reimport_missing_data should update products' do
     # for missing_article_name_migel_code_list
-    ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+    allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     multilingual = double('multilingual',
                         :de  => '',
                         :de= => nil
@@ -422,38 +416,38 @@ describe Importer, "Examples" do
                    :migel_code => 'migel_code',
                    :save => nil
                   )
-    Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+    allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
 
     server = double('swissindex_nonpharmad')
-    DRbObject.stub(:new).and_return(@server)
+    allow(DRbObject).to receive(:new).and_return(@server)
     require 'migel/ext/swissindex'
     record = {:pharmacode => 'pharmacode', :article_name => 'article_name'}
     table = [record]
-    ODDB::Swissindex.stub(:search_migel_table).and_return(table)
+    allow(ODDB::Swissindex).to receive(:search_migel_table).and_return(table)
 
-    @importer.reimport_missing_data.should == '1 migelids is updated.'
+    expect(@importer.reimport_missing_data).to eq('1 migelids is updated.')
 
   end
   describe '#code_list' do
     context 'default' do
       before do
-        ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+        allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
       end
       subject {@importer.code_list('index_table_name')}
-      it {should == ['migel_code']}
+      it {is_expected.to eq(['migel_code'])}
     end
   end
   describe '#migel_code_list' do
     before do
-      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     end
     subject {@importer.migel_code_list}
-    it {should == ['migel_code']}
+    it {is_expected.to eq(['migel_code'])}
   end
   describe '#report' do
     before do
-      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
-      @importer.stub(:migel_code_list).and_return(['migel_code'])
+      allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
+      allow(@importer).to receive(:migel_code_list).and_return(['migel_code'])
       @importer.instance_eval do
         @migel_codes_with_products = []
         @migel_codes_without_products = []
@@ -468,56 +462,56 @@ describe Importer, "Examples" do
        "Migelids with products (0)", "",
        "Migelids without products (0)"]
     }
-    it {should == expected}
+    it {is_expected.to eq(expected)}
   end
   describe '#compress' do
     before do
-      File.stub(:mtime)
-      File.stub(:open)
+      allow(File).to receive(:mtime)
+      allow(File).to receive(:open)
       @gz = double('gz',
                  :mtime= => nil,
                  :orig_name= => nil,
                  :puts => nil
                 )
-      Zlib::GzipWriter.stub(:open).and_yield(@gz)
+      allow(Zlib::GzipWriter).to receive(:open).and_yield(@gz)
     end
     subject {@importer.compress('file')}
-    it {should == 'file.gz'}
+    it {is_expected.to eq('file.gz')}
   end
   describe '#report_save_all_products' do
     before do
-      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
       server = double('swissindex_nonpharmad')
-      DRbObject.stub(:new).and_return(@server)
+      allow(DRbObject).to receive(:new).and_return(@server)
       require 'migel/ext/swissindex'
       migelid = double('migelid',:migel_code => '12.34.56.78.9')
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
       record = {:pharmacode => 'pharmacode', :article_name => 'article_name'}
       table = [record]
-      ODDB::Swissindex.stub(:search_migel_table).and_return(table)
+      allow(ODDB::Swissindex).to receive(:search_migel_table).and_return(table)
 
       writer = double('writer', :<< => nil)
-      CSV.stub(:open).and_yield(writer)
+      allow(CSV).to receive(:open).and_yield(writer)
 
-      File.stub(:mtime)
-      File.stub(:open)
+      allow(File).to receive(:mtime)
+      allow(File).to receive(:open)
       @gz = double('gz',
                  :mtime= => nil,
                  :orig_name= => nil,
                  :puts => nil
                 )
-      Zlib::GzipWriter.stub(:open).and_yield(@gz)
+      allow(Zlib::GzipWriter).to receive(:open).and_yield(@gz)
       config = double('config', :server_name => 'server_name')
-      Migel.stub(:config).and_return(config)
-      Mail.stub(:notify_admins_attached).and_return('notify_admins_attached')
-      @importer.stub(:migel_code_list).and_return(['migel_code'])
+      allow(Migel).to receive(:config).and_return(config)
+      allow(Mail).to receive(:notify_admins_attached).and_return('notify_admins_attached')
+      allow(@importer).to receive(:migel_code_list).and_return(['migel_code'])
       @importer.instance_eval do
         @migel_codes_with_products = []
         @migel_codes_without_products = []
       end
     end
     subject {@importer.reported_save_all_products}
-    it {should be_a(Array)}
+    it {is_expected.to be_a(Array)}
     subject {@importer.report('de')}
     let(:expected) {
       ["Total time to update: 0.00 [m]",
@@ -527,35 +521,35 @@ describe Importer, "Examples" do
        "Migelids with products (0)", "",
        "Migelids without products (0)"]
     }
-    it {should == expected}
+    it {is_expected.to eq(expected)}
   end
 end # describe
 
   describe 'RealWorld: create 3 language specific CSV files from the given xls file' do
     before(:each) do
-      ODBA.cache.stub(:index_keys).and_return(['migel_code'])
+      allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
       multilingual = double('multilingual', :de => '')
       product = double('product',:article_name => multilingual)
       migelid = double('migelid',:products => [product])
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
     end
 
     def setup_importer
       @importer = Migel::Util::Importer.new
       @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL2014_v2.xls'))
-      File.exists?(@test_file).should be true
-      File.size(@test_file).should < 30000
+      expect(File.exists?(@test_file)).to be true
+      expect(File.size(@test_file)).to be < 30000
       @server = Migel::Util::Server.new
       allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
       migelid = double('migelid',:migel_code => '12.34.56.78.9', :delete => true)
-      Migel::Model::Migelid.stub(:find_by_migel_code).and_return(migelid)
+      allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
       group = double('group',
                     :name => 'name',
                     :update_limitation_text => nil,
                     :save => nil
                     )
-      Migel::Model::Group.stub(:find_by_code)
-      @importer.data_dir.should_not be_nil
+      allow(Migel::Model::Group).to receive(:find_by_code)
+      expect(@importer.data_dir).not_to be_nil
       FileUtils.rm(Dir.glob(File.join(@importer.data_dir, '*')))
     end
 
@@ -563,8 +557,8 @@ end # describe
       setup_importer
       Migel::Util::Importer::OriginalXLS = @test_file
       @importer.update_all
-      @importer.xls_file.should match /MiGeL.xls/
-      Dir.glob(File.join(@importer.data_dir, '*.csv')).size.should  == 3
+      expect(@importer.xls_file).to match /MiGeL.xls/
+      expect(Dir.glob(File.join(@importer.data_dir, '*.csv')).size).to  eq(3)
       baseNames = Dir.glob(File.join(@importer.data_dir, '*.csv')).collect{ |f| File.basename(f) }
       { 'migel_de.csv' => 
           'Produktegruppe Nr,Limitation Produktegruppe,Produktegruppe,Beschreibung Produktegruppe,Kategorie Nr,Limitation Kategorie,Kategorie,Beschreibung Kategorie,Revision Kaegorie,Revision Kat Gültig ab,Unterkategorie Nr,Limitation Unterkategorie,Unterkategorie,Positions Nummer,Limitation,Bezeichnung,Menge,Einheit,Höchstvergütungsbetrag,Revision Position,Revision Gültig ab',
@@ -574,17 +568,17 @@ end # describe
           'Gruppi di prodotti No,Limitazione (Gruppi di prodotti),Gruppi di prodotti,Descrizione,Categoria No,Limitazione (Categoria),Categoria,Descrizione Categoria,Revisione Categoria,Valida a partire dal (Revisione Categoria),Sotto-categoria No,Limitazione Sotto-categoria,Sotto-categoria,Numero di posizione,Limitazione,Denominazione,Quantita,Unità,Importo Massimo,Revisione,Valida a partire dal',
       }.each {
         |csv_file, firstline|
-        baseNames.index(csv_file).should_not == nil
+        expect(baseNames.index(csv_file)).not_to eq(nil)
         lines=IO.readlines(File.join(@importer.data_dir, csv_file))
         # puts "#{csv_file} has  #{lines.size} zeilen"
-        lines[1].should match /^01.,/
-        lines[6].should match /^34.,/
-        lines[6].should match /,34\.60\.01\.00\.1,/
-        lines.size.should == 9
-        lines.first.chomp.should == firstline
+        expect(lines[1]).to match /^01.,/
+        expect(lines[6]).to match /^34.,/
+        expect(lines[6]).to match /,34\.60\.01\.00\.1,/
+        expect(lines.size).to eq(9)
+        expect(lines.first.chomp).to eq(firstline)
       }
       @importer.update_all
-      Dir.glob(File.join(@importer.data_dir, '*.csv')).size.should  == 3
+      expect(Dir.glob(File.join(@importer.data_dir, '*.csv')).size).to  eq(3)
     end
 
     it "save_all_products_all_languages should work fine and send a correct email"  do
@@ -594,8 +588,8 @@ end # describe
       end
       Migel::Util::Importer::OriginalXLS = @test_file
       @importer.save_all_products_all_languages
-      ::Mail::TestMailer.deliveries.size.should == 3
-      ::Mail::TestMailer.deliveries.each{ |mail| mail.to_s.should_not match /RuntimeError/ }
+      expect(::Mail::TestMailer.deliveries.size).to eq(3)
+      ::Mail::TestMailer.deliveries.each{ |mail| expect(mail.to_s).not_to match /RuntimeError/ }
     end
   end
 

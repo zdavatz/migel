@@ -8,7 +8,7 @@ require 'migel/model_super'
 require 'migel/model/group'
 require 'migel/util/multilingual'
 require 'odba/drbwrapper'
-require 'rspec/autorun' # Required for Rcov to run.
+require 'spec_helper'
 
 module Migel
   module Model
@@ -19,31 +19,31 @@ describe Group, "when initialized with migel code 15" do
     @group = Group.new(group_code)
   end
   it "migel code should be 15" do
-    @group.code.should == '15'
-    @group.migel_code.should == '15'
-    @group.pointer_descr.should == '15'
+    expect(@group.code).to eq('15')
+    expect(@group.migel_code).to eq('15')
+    expect(@group.pointer_descr).to eq('15')
   end
   it "subgroups should be empty" do
-    @group.subgroups.should be_empty
+    expect(@group.subgroups).to be_empty
   end
   it "limitation_text.to_s should be ''" do
-    @group.limitation_text.should be_nil
-    @group.limitation_text.to_s.should == ''
+    expect(@group.limitation_text).to be_nil
+    expect(@group.limitation_text.to_s).to eq('')
   end
   it "name.to_s should be ''" do
-    @group.name.should be_an_instance_of(Migel::Util::Multilingual)
-    @group.name.to_s.should == ''
+    expect(@group.name).to be_an_instance_of(Migel::Util::Multilingual)
+    expect(@group.name.to_s).to eq('')
   end
   it "name.xx should be nil" do
-    @group.name.de.should be_nil
-    @group.name.fr.should be_nil
-    @group.name.en.should be_nil
+    expect(@group.name.de).to be_nil
+    expect(@group.name.fr).to be_nil
+    expect(@group.name.en).to be_nil
   end
   it "parent should be nil" do
-    @group.parent.should be_nil
+    expect(@group.parent).to be_nil
   end
   it "pointer should be 'pointer'" do
-    @group.pointer.should == 'pointer'
+    expect(@group.pointer).to eq('pointer')
   end
 end
 
@@ -56,11 +56,11 @@ describe Group, "when limitation_text is updated" do
     @group.update_limitation_text(limitation_text, language)
   end
   it "limitation_text.de should be 'limitation text'" do
-    @group.limitation_text.should be_an_instance_of(Migel::Util::Multilingual) 
-    @group.limitation_text.de.should == 'limitation text'
-    @group.limitation_text.to_s.should == 'limitation text'
-    @group.limitation_text.en.should == 'limitation text'
-    @group.limitation_text.fr.should be_nil
+    expect(@group.limitation_text).to be_an_instance_of(Migel::Util::Multilingual) 
+    expect(@group.limitation_text.de).to eq('limitation text')
+    expect(@group.limitation_text.to_s).to eq('limitation text')
+    expect(@group.limitation_text.en).to eq('limitation text')
+    expect(@group.limitation_text.fr).to be_nil
   end
 end
 
@@ -72,12 +72,12 @@ describe Group, "when name is updated" do
     @group.name.fr = 'name.fr'
   end
   it "name.de should be 'name.de'" do
-    @group.name.de.should == 'name.de'
-    @group.name.en.should == 'name.de'
-    @group.name.fr.should == 'name.fr'
-    @group.de.should == 'name.de'
-    @group.en.should == 'name.de'
-    @group.fr.should == 'name.fr'
+    expect(@group.name.de).to eq('name.de')
+    expect(@group.name.en).to eq('name.de')
+    expect(@group.name.fr).to eq('name.fr')
+    expect(@group.de).to eq('name.de')
+    expect(@group.en).to eq('name.de')
+    expect(@group.fr).to eq('name.fr')
   end
 end
 

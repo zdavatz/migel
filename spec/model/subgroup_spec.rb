@@ -4,7 +4,7 @@
 $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
 require 'rspec'
-require 'rspec/autorun'
+require 'spec_helper'
 require 'migel/model_super'
 require 'migel/model/group'
 require 'migel/model/subgroup'
@@ -24,45 +24,45 @@ describe Subgroup, "when initialized with code #{subgroup_code} (group_code: #{g
     @subgroup.group = @group
   end
   it "code should be #{subgroup_code}" do
-    @subgroup.code.should == subgroup_code
+    expect(@subgroup.code).to eq(subgroup_code)
   end
   it "migel_code should be #{group_code}.#{subgroup_code}" do
-    @subgroup.migel_code.should == "#{group_code}.#{subgroup_code}"
+    expect(@subgroup.migel_code).to eq("#{group_code}.#{subgroup_code}")
   end
   it "migelids should be empty" do
-    @subgroup.migelids.should be_empty
+    expect(@subgroup.migelids).to be_empty
   end
   it "parent should be group" do
-    @subgroup.parent.should == @group
-    @subgroup.parent.should == @subgroup.group
+    expect(@subgroup.parent).to eq(@group)
+    expect(@subgroup.parent).to eq(@subgroup.group)
   end
   it "limitation_text.to_s should be ''" do
-    @subgroup.limitation_text.should be_nil
-    @subgroup.limitation_text.to_s.should == ''
+    expect(@subgroup.limitation_text).to be_nil
+    expect(@subgroup.limitation_text.to_s).to eq('')
   end
   it "name.to_s should be ''" do
-    @subgroup.name.should be_an_instance_of(Migel::Util::Multilingual)
-    @subgroup.name.to_s.should == ''
+    expect(@subgroup.name).to be_an_instance_of(Migel::Util::Multilingual)
+    expect(@subgroup.name.to_s).to eq('')
   end
   it "name.xx should be nil" do
-    @subgroup.name.de.should be_nil
-    @subgroup.name.fr.should be_nil
-    @subgroup.name.en.should be_nil
+    expect(@subgroup.name.de).to be_nil
+    expect(@subgroup.name.fr).to be_nil
+    expect(@subgroup.name.en).to be_nil
   end
   it "structural_ancestors should be [group]" do
-    @subgroup.structural_ancestors('app').should == [@group]
+    expect(@subgroup.structural_ancestors('app')).to eq([@group])
   end
   it "pointer should be 'pointer'" do
-    @subgroup.pointer.should == 'pointer'
+    expect(@subgroup.pointer).to eq('pointer')
   end
   it "items should be nil" do
-    @subgroup.items.should be_nil
+    expect(@subgroup.items).to be_nil
   end
   it "product_text should be nil" do
-    @subgroup.product_text.should be_nil
+    expect(@subgroup.product_text).to be_nil
   end
   it "respond_to? should have two arguments" do
-    @subgroup.respond_to?(:name, 'hogehoge').should be true
+    expect(@subgroup.respond_to?(:name, 'hogehoge')).to be true
   end
 end
 
@@ -78,11 +78,11 @@ describe Subgroup, "when limitation_text is updated" do
     @subgroup.update_limitation_text(limitation_text, language)
   end
   it "limitation_text.de should be '#{limitation_text}'" do
-    @subgroup.limitation_text.should be_an_instance_of(Migel::Util::Multilingual) 
-    @subgroup.limitation_text.de.should == 'limitation text'
-    @subgroup.limitation_text.to_s.should == 'limitation text'
-    @subgroup.limitation_text.en.should == 'limitation text'
-    @subgroup.limitation_text.fr.should be_nil
+    expect(@subgroup.limitation_text).to be_an_instance_of(Migel::Util::Multilingual) 
+    expect(@subgroup.limitation_text.de).to eq('limitation text')
+    expect(@subgroup.limitation_text.to_s).to eq('limitation text')
+    expect(@subgroup.limitation_text.en).to eq('limitation text')
+    expect(@subgroup.limitation_text.fr).to be_nil
   end
 end
 
@@ -97,12 +97,12 @@ describe Subgroup, "when name is updated" do
     @subgroup.name.fr = 'name.fr'
   end
   it "name.de should be 'name.de'" do
-    @subgroup.name.de.should == 'name.de'
-    @subgroup.name.en.should == 'name.de'
-    @subgroup.name.fr.should == 'name.fr'
-    @subgroup.de.should == 'name.de'
-    @subgroup.en.should == 'name.de'
-    @subgroup.fr.should == 'name.fr'
+    expect(@subgroup.name.de).to eq('name.de')
+    expect(@subgroup.name.en).to eq('name.de')
+    expect(@subgroup.name.fr).to eq('name.fr')
+    expect(@subgroup.de).to eq('name.de')
+    expect(@subgroup.en).to eq('name.de')
+    expect(@subgroup.fr).to eq('name.fr')
   end
 end
 
