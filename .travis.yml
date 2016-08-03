@@ -2,6 +2,8 @@ language: ruby
 before_install:
   - gem install bundler
 
+cache: bundler
+
 install:
   - bundle install --without debugger
 
