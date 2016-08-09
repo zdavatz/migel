@@ -9,7 +9,7 @@ gem 'mechanize'
 gem 'spreadsheet'
 gem "dbi"# , "0.4.5", :git => 'https://github.com/zdavatz/ruby-dbi.git'
 gem 'deprecated', '< 3.0.0'
-gem 'sbsm'
+gem 'sbsm', '>=1.3.0'
 gem 'pg' # for running bin/migeld
  
 group :development do
@@ -25,5 +25,5 @@ group :development do
 end
 
 group :debugger do
-  gem 'pry-debugger', :platforms => [:ruby_19, :ruby_20]
+  gem 'pry-debugger', :platforms => [:ruby_19, :ruby_20, :ruby_22, :ruby_23]
 end

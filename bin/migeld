@@ -3,7 +3,6 @@
 # MigelDrbServer -- migel -- 17.08.2011 -- mhatakeyama@ywesee.com
 
 $: << File.expand_path('../lib', File.dirname(__FILE__))
-$KCODE = 'u'
 
 require 'drb'
 require 'migel/config'

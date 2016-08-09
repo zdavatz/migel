@@ -5,7 +5,6 @@ $: << File.expand_path('../../lib', File.dirname(__FILE__))
 
 require 'rspec'
 require 'rspec/mocks'
-require 'spec_helper'
 
 require 'migel/model'
 require 'migel/util/server'

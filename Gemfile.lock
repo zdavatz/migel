@@ -93,7 +93,7 @@ GEM
       nokogiri (>= 1.4.0)
       nori (~> 1.0)
       wasabi (~> 2.0)
-    sbsm (1.2.9)
+    sbsm (1.3.0)
       hpricot
       mail
       rack
@@ -143,7 +143,7 @@ DEPENDENCIES
   rspec
   rspec-mocks
   savon (= 0.9.7)
-  sbsm
+  sbsm (>= 1.3.0)
   simplecov
   spreadsheet
   travis-lint

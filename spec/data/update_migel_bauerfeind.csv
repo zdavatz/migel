@@ -1,0 +1,6 @@
+Material;EAN;Materialkurztext deutsch;Materialkurztext französisch;Pharmacode CH;MiGeL Nr. CH; UVP ;Materialtext deutsch;Materialtext französisch
+11011013080601;4046445108009;AchilloTrain,titan,rechts,1;AchilloTrain,titane,droit,1;2244350;05.02.03.00.1; Fr. 120.50 ;AchilloTrain,titan,rechts,1;AchilloTrain,titane,droit,1
+11011013080602;4046445108532;AchilloTrain,titan,rechts,2;AchilloTrain,titane,droit,2;2244367;05.02.03.00.1; Fr. 120.50 ;AchilloTrain,titan,rechts,2;AchilloTrain,titane,droit,2
+21880021720334;4026358067614;VTmic,AD,Ccl2,oFS,XLpl,sch;VTmic,AD,Ccl2,po,XLpl,noi;3098063;17.01.02.00.1; Fr. 82.30 ;VenoTrain micro, AD, Ccl 2, offene Fußspitze, XL plus long, schwarz ;VenoTrain micro, AD, Ccl 2, pied ouvert, XL plus long, noir
+21880021720335;4026358067615;VTmic,AD,Ccl2,oFS,XLpl,sch;VTmic,AD,Ccl2,po,XLpl,noi;9999999;9999.99.99.99; Fr. 82.30 ;VenoTrain micro, AD, Ccl 2, offene Fußspitze, XL plus long, schwarz ;VenoTrain micro, AD, Ccl 2, pied ouvert, XL plus long, noir
+11011013080602;4046445109999;Missing_Pharmacode;Missing_Pharmacode,2;;99.99.99.99; Fr. 120.50 ;AchilloTrain,titan,rechts,2;AchilloTrain,titane,droit,2

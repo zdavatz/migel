@@ -586,6 +586,7 @@ end # describe
       ::Mail.defaults do
         delivery_method :test
       end
+      ::Mail::TestMailer.deliveries.clear
       Migel::Util::Importer::OriginalXLS = @test_file
       @importer.save_all_products_all_languages
       expect(::Mail::TestMailer.deliveries.size).to eq(3)

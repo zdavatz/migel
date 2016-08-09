@@ -4,7 +4,6 @@
 
 require 'net/smtp'
 require 'migel/config'
-require 'migel/util/smtp_tls'
 require 'mail'
 require 'base64'
 
