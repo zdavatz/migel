@@ -71,8 +71,8 @@ module Migel
         multilingual = double('multilingual')
         expect(multilingual).to receive(:de=).with('Bauerfeind AG').and_return(nil)
         expect(multilingual).to receive(:fr=).with('Bauerfeind SA').and_return(nil)
-        expect(multilingual).to receive(:de=).with('AchilloTrain,titan,rechts,1').and_return(nil)
-        expect(multilingual).to receive(:fr=).with('AchilloTrain,titane,droit,1').and_return(nil)
+        expect(multilingual).to receive(:de=).with('AchilloTrain, titan, rechts, 1').and_return(nil)
+        expect(multilingual).to receive(:fr=).with('AchilloTrain, titane, droit, 1').and_return(nil)
         expect(multilingual).to receive(:save).with(no_args).and_return(nil).never
         product_2244350 = double('product_2244350',
                                  :article_name => multilingual,

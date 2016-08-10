@@ -102,9 +102,10 @@ module Migel
               :ean_code     => ean13,
               :pharmacode   => pharmacode,
               :ppub         => line[6].gsub(/\s|Fr\./,''),
-              :article_name_de => line[7],
-              :article_name_fr => line[8],
+              :article_name_de => line[7].gsub(/,([^\s])/, ", \\1"),
+              :article_name_fr => line[8].gsub(/,([^\s])/, ", \\1"),
             }
+            #require 'pry'; binding.pry
             # puts "Short/long do not match in line #{count}: #{line}" unless line[3].eql?(line[8]) && line[2].eql?(line[7])
 
             @migel_codes_with_products << migel_code
