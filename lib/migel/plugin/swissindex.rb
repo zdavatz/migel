@@ -81,7 +81,6 @@ module Migel
             time = estimate_time(start_time, total, count + 1)
             puts time if estimate
           end
-          swissindex.cleanup_items
         end # SWISSINDEX_MIGEL_SERVER
         Migel.debug_msg "save_all_products done"
       end # CSV.open
