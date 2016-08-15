@@ -28,6 +28,7 @@ module Migel
       before(:each) do
         set_test_mail
         @importer = Migel::Util::CsvImporter.new
+        expect(Migel::Model::Product).to receive(:all).with(no_args).and_return( [ ]).at_least(1)
       end
       it "import_all_products_from_csv must return false" do
         file_to_import = File.expand_path(File.join(File.dirname(__FILE__), '..', 'data', 'should_not_exist.csv'))
@@ -45,6 +46,7 @@ module Migel
       before(:each) do
         set_test_mail
         @importer = Migel::Util::CsvImporter.new
+        expect(Migel::Model::Product).to receive(:all).with(no_args).and_return( [ ]).at_least(1)
       end
       it "import_all_products_from_csv must return false" do
         options = {
@@ -63,14 +65,17 @@ module Migel
     end
     MigelTestCode = '05.02.03.00.1'
     VenoTrainCode = '17.01.02.00.1'
-
+    GenuTrainCode = '05.04.04.00.1'
     describe CsvImporter, "Examples" do
       before(:each) do
         set_test_mail
         allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
         multilingual = double('multilingual')
-        expect(multilingual).to receive(:de=).with('Bauerfeind AG').and_return(nil)
-        expect(multilingual).to receive(:fr=).with('Bauerfeind SA').and_return(nil)
+        multilingual_company = double('multilingual_company')
+        expect(multilingual_company).to receive(:de=).with('Bauerfeind AG').and_return(nil)
+        expect(multilingual_company).to receive(:fr=).with('Bauerfeind SA').and_return(nil)
+
+        multilingual = double('multilingual')
         expect(multilingual).to receive(:de=).with('AchilloTrain, titan, rechts, 1').and_return(nil)
         expect(multilingual).to receive(:fr=).with('AchilloTrain, titane, droit, 1').and_return(nil)
         expect(multilingual).to receive(:save).with(no_args).and_return(nil).never
@@ -101,16 +106,32 @@ module Migel
         expect(product_2244350).to receive(:migelid=).and_return(nil)
         expect(product_2244350).to receive(:migelid).and_return(migelid).never
         expect(product_2244350).to receive(:ppub=).with('120.50').and_return(nil)
-        expect(product_2244350).to receive(:save).with(no_args).and_return(nil)
+        expect(product_2244350).to receive(:save).with(no_args).and_return(nil).at_least(:once)
         expect(product_2244350).to receive(:ean_code).with(no_args).and_return('4046445108532').at_least(:once)
         expect(product_2244350).to receive(:ean_code=).with("4046445108009").and_return(nil)
         expect(product_2244350).to receive(:ean_code=).with("4046445108532").and_return(nil).never
-        expect(product_2244350).to receive(:status=).with("A").and_return(nil)
-        expect(product_2244350).to receive(:companyname).and_return(multilingual).twice
+        @status_2244350 = nil
+        expect(product_2244350).to receive(:status=).with("A").and_return(@status_2244350 = 'A')
+        expect(product_2244350).to receive(:status).and_return('A').at_least(1)
+        expect(product_2244350).to receive(:companyname).with(no_args).and_return(multilingual_company).at_least(1)
+        @status_with_ean = nil
+        expect(product_with_ean).to receive(:companyname).with(no_args).and_return(multilingual_company).at_least(1)
+        expect(product_with_ean).to receive(:status).and_return('A')
+        expect(product_with_ean).to receive(:status).and_return(@status_with_ean).at_least(1)
         @server = Migel::Util::Server.new
         allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
         allow(ODBA.cache).to receive(:fetch_named).with('all_products', any_args).and_return( { MigelTestCode => product_2244350, VenoTrainCode => product_with_ean})
+        expect(Migel::Model::Product).to receive(:all).with(no_args).and_return( [ product_2244350, product_with_ean]).at_least(1)
+        expect(Migel::Model::Migelid).to receive(:all).with(no_args).and_return([migelid]).once
         expect(Migel::Model::Migelid).to receive(:find_by_migel_code).with('9999.99.99.99').and_return(nil).once
+        migelid_genutrain = double('migelid_genutrain',
+                         :migel_code => GenuTrainCode,
+                         :delete => true,
+                         :products => [],
+                         :add_product => nil,
+                         :save => nil,
+                        )
+        expect(Migel::Model::Migelid).to receive(:find_by_migel_code).with(GenuTrainCode).and_return(migelid_genutrain).at_least(1)
         expect(Migel::Model::Migelid).to receive(:find_by_migel_code).with(MigelTestCode).and_return(migelid).twice
         expect(Migel::Model::Migelid).to receive(:find_by_migel_code).with(VenoTrainCode).and_return(migelid).once
         group = double('group',
@@ -126,9 +147,10 @@ module Migel
         expect(@importer.import_all_products_from_csv({:filename => file_to_import})).to eq(true)
         report = @importer.report
         expect(report.find{|line| /Total time to update/.match(line)}).not_to eq(nil)
-        success = 'Total     4 Migelids (    3 Migelids have products /     1 Migelids have no products)'
+        success = 'Total     6 Migelids (    5 Migelids have products /     1 Migelids have no products)'
         expect(report.find{|line| success.eql?(line)}).to eq(success)
-        expected = 'Migelids with products (3)'
+        expect(report.find_all{|line| /found via Bauerfeind AG or Bauerfeind SA were. Active products before/.match(line)}.size).to eq 1
+        expected = 'Migelids with products (5)'
         expect(report.find{|line| expected.eql?(line)}).to eq(expected)
         expect(::Mail::TestMailer.deliveries.size).to eq(1)
         expect(::Mail::TestMailer.deliveries.first.to_s).not_to match /RuntimeError/
