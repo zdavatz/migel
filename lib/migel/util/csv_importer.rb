@@ -138,9 +138,21 @@ module Migel
         @nr_products_after = get_nr_active_bauerfeind_products
         puts "#{Time.now}: finished: count #{count}: @nr_records #{@nr_records} " +
             "@migel_codes_without_products #{@migel_codes_without_products.size} @migel_codes_with_products #{@migel_codes_with_products.uniq}"
+        restart_migel_server
         true
       end
       private
+      def restart_migel_server(sleep_time= defined?(RSpec) ? 0 : 5)
+        pid = `/bin/ps  -C ruby -Opid | /bin/grep migeld | /usr/bin/cut -d ' ' -f 1`
+        if pid.to_i != 0
+          puts("restarting migel server. Pid to kill is #{pid}")
+          res = system("/bin/kill #{pid}")
+          sleep(sleep_time)
+          puts("#{Time.now}: restart_export_server. Done sleeping #{sleep_time} seconds. res was #{res}")
+        else
+          puts("#{Time.now}: no migeld found to kill")
+        end
+      end
       def get_nr_active_bauerfeind_products
         Migel::Model::Product.all.find_all{|x| x.status == 'A' && /bauerfeind/i.match(x.companyname.to_s)}.size
       end

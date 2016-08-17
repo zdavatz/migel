@@ -120,6 +120,7 @@ module Migel
         expect(product_with_ean).to receive(:status).and_return(@status_with_ean).at_least(1)
         @server = Migel::Util::Server.new
         allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
+        allow(DRbObject).to receive(:new).and_return(@server)
         allow(ODBA.cache).to receive(:fetch_named).with('all_products', any_args).and_return( { MigelTestCode => product_2244350, VenoTrainCode => product_with_ean})
         expect(Migel::Model::Product).to receive(:all).with(no_args).and_return( [ product_2244350, product_with_ean]).at_least(1)
         expect(Migel::Model::Migelid).to receive(:all).with(no_args).and_return([migelid]).once
