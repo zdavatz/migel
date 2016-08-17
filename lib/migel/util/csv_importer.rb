@@ -143,7 +143,7 @@ module Migel
       end
       private
       def restart_migel_server(sleep_time= defined?(RSpec) ? 0 : 5)
-        pid = `/bin/ps  -C ruby -Opid | /bin/grep migeld | /usr/bin/cut -d ' ' -f 1`
+        pid = `/bin/ps  -C ruby -Opid | /bin/grep migeld | /usr/bin/awk '{print $1}'`
         if pid.to_i != 0
           puts("restarting migel server. Pid to kill is #{pid}")
           res = system("/bin/kill #{pid}")
