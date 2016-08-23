@@ -72,18 +72,21 @@ module Migel
         allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
         multilingual = double('multilingual')
         multilingual_company = double('multilingual_company')
-        expect(multilingual_company).to receive(:de=).with('Bauerfeind AG').and_return(nil)
-        expect(multilingual_company).to receive(:fr=).with('Bauerfeind SA').and_return(nil)
+        expect(multilingual_company).to receive(:de).with(no_args).and_return('Bauerfeind AG').at_least(1)
+        # expect(multilingual_company).to receive(:de=).with('Bauerfeind AG').and_return(nil)
+        # expect(multilingual_company).to receive(:fr=).with('Bauerfeind SA').and_return(nil)
 
         multilingual = double('multilingual')
-        expect(multilingual).to receive(:de=).with('AchilloTrain, titan, rechts, 1').and_return(nil)
-        expect(multilingual).to receive(:fr=).with('AchilloTrain, titane, droit, 1').and_return(nil)
+        # expect(multilingual).to receive(:de=).with('AchilloTrain, titan, rechts, 1').and_return(nil)
+        # expect(multilingual).to receive(:fr=).with('AchilloTrain, titane, droit, 1').and_return(nil)
         expect(multilingual).to receive(:save).with(no_args).and_return(nil).never
         product_2244350 = double('product_2244350',
                                  :article_name => multilingual,
                                  :migel_code => MigelTestCode,
                                  :ean_code= => nil,
-                                 :pharmacode => '2244350')
+                                 :pharmacode => '2244350',
+                                 :odba_delete => nil,
+                                 )
         venotrain_names = double('venotrain_names')
         expect(venotrain_names).to receive(:de=).with(any_args).and_return(nil).never
         expect(venotrain_names).to receive(:fr=).with(any_args).and_return(nil).never
@@ -101,17 +104,18 @@ module Migel
                          :delete => true,
                          :products => [product_2244350],
                          :add_product => nil,
+                         :odba_store => nil,
                          :save => nil,
                         )
-        expect(product_2244350).to receive(:migelid=).and_return(nil)
+        expect(product_2244350).to receive(:migelid=).and_return(nil).never
         expect(product_2244350).to receive(:migelid).and_return(migelid).never
-        expect(product_2244350).to receive(:ppub=).with('120.50').and_return(nil)
-        expect(product_2244350).to receive(:save).with(no_args).and_return(nil).at_least(:once)
-        expect(product_2244350).to receive(:ean_code).with(no_args).and_return('4046445108532').at_least(:once)
-        expect(product_2244350).to receive(:ean_code=).with("4046445108009").and_return(nil)
+        expect(product_2244350).to receive(:ppub=).with('120.50').and_return(nil).never
+        expect(product_2244350).to receive(:save).with(no_args).and_return(nil).never
+        expect(product_2244350).to receive(:ean_code).with(no_args).and_return('4046445108532')
+        expect(product_2244350).to receive(:ean_code=).with("4046445108009").and_return(nil).never
         expect(product_2244350).to receive(:ean_code=).with("4046445108532").and_return(nil).never
         @status_2244350 = nil
-        expect(product_2244350).to receive(:status=).with("A").and_return(@status_2244350 = 'A')
+        expect(product_2244350).to receive(:status=).with("A").and_return(@status_2244350 = 'A').never
         expect(product_2244350).to receive(:status).and_return('A').at_least(1)
         expect(product_2244350).to receive(:companyname).with(no_args).and_return(multilingual_company).at_least(1)
         @status_with_ean = nil
@@ -124,6 +128,7 @@ module Migel
         allow(ODBA.cache).to receive(:fetch_named).with('all_products', any_args).and_return( { MigelTestCode => product_2244350, VenoTrainCode => product_with_ean})
         expect(Migel::Model::Product).to receive(:all).with(no_args).and_return( [ product_2244350, product_with_ean]).at_least(1)
         expect(Migel::Model::Migelid).to receive(:all).with(no_args).and_return([migelid]).once
+        expect(Migel::Model::Migelid).to receive(:all).with(no_args).and_return([]).once
         expect(Migel::Model::Migelid).to receive(:find_by_migel_code).with('9999.99.99.99').and_return(nil).once
         migelid_genutrain = double('migelid_genutrain',
                          :migel_code => GenuTrainCode,

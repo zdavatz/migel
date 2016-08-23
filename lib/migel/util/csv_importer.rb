@@ -85,7 +85,7 @@ module Migel
         total = File.readlines(file_name).to_a.length
         count = 0
         @nr_products_before = get_nr_active_bauerfeind_products
-        set_bauerfeind_products_inactive
+        delete_all_inactive_bauerfeind_products
         products = Migel::Util::Server.new.all_products
         CSV.foreach(file_name, :col_sep => ';') do |line|
           count += 1
@@ -115,7 +115,6 @@ module Migel
               :article_name_fr => line[8].gsub(/,([^\s])/, ", \\1"),
             }
             # puts "#{Time.now}: Short/long do not match in line #{count}: #{line}" unless line[3].eql?(line[8]) && line[2].eql?(line[7])
-
             @migel_codes_with_products << migel_code
             if with_matching_pharmacode.size == 1
               update_product_from_csv(migelid, record)
@@ -142,6 +141,42 @@ module Migel
         true
       end
       private
+      def delete_all_inactive_bauerfeind_products
+        total = 0
+        Migel::Model::Migelid.all.each do |migel_id|
+          nr_deleted = 0
+            migel_code = migel_id.migel_code
+            migel_id.products.find_all {|x| x && x.companyname && x.companyname.de && /bauerfeind/i.match(x.companyname.de.force_encoding('UTF-8')) }.each do |product|
+              puts("#{Time.now}: delete_all_bauerfeind_products. #{product.odba_id} #{product.pharmacode} #{product.ean_code} #{migel_code}")
+              product.odba_delete
+              nr_deleted += 1
+            end
+            next if nr_deleted == 0
+            migel_id.products.delete_if{|x| x && x.companyname && x.companyname.de && /bauerfeind/i.match(x.companyname.de.force_encoding('UTF-8'))}
+            puts("#{Time.now}: Deleted #{nr_deleted} products from #{migel_code}")
+            migel_id.odba_store
+            total += nr_deleted
+        end
+        Migel::Model::Product.all.odba_store unless defined?(RSpec)
+        Migel::Model::Migelid.all.odba_store unless defined?(RSpec)
+        # Now we need to check whether there are products laying around, which no valid migel_code, but still belong to Bauerfeind.
+        nr_bauerfeind = Migel::Model::Product.all.find_all{|x| /bauerfeind/i.match(x.companyname.to_s)}.size
+        puts("#{Time.now}: Deleted #{total} products. Having #{get_nr_active_bauerfeind_products} active_bauerfeind_products of #{nr_bauerfeind}")
+        if nr_bauerfeind > 0
+          second = 0
+          Migel::Model::Product.all.find_all{|x| /bauerfeind/i.match(x.companyname.to_s)}.each do |product|
+              puts("#{Time.now}: delete_all_bauerfeind_products. #{product.odba_id} #{product.pharmacode} #{product.ean_code} #{migel_code}")
+              product.odba_delete
+              second += 1
+          end
+          Migel::Model::Product.all.odba_store unless defined?(RSpec)
+          Migel::Model::Migelid.all.odba_store unless defined?(RSpec)
+          nr_bauerfeind = Migel::Model::Product.all.find_all{|x| /bauerfeind/i.match(x.companyname.to_s)}.size
+          puts("#{Time.now}: Second deleted of  #{second} products. Having #{get_nr_active_bauerfeind_products} active_bauerfeind_products of #{nr_bauerfeind}")
+        end
+        get_nr_active_bauerfeind_products
+        puts("#{Time.now}: Done with delete_all_bauerfeind_products (Deleted #{total} products. Having #{get_nr_active_bauerfeind_products} active_bauerfeind_products")
+      end
       def restart_migel_server(sleep_time= defined?(RSpec) ? 0 : 5)
         pid = `/bin/ps  -C ruby -Opid | /bin/grep migeld | /usr/bin/awk '{print $1}'`
         if pid.to_i != 0
