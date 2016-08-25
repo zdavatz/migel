@@ -165,7 +165,7 @@ module Migel
         if nr_bauerfeind > 0
           second = 0
           Migel::Model::Product.all.find_all{|x| /bauerfeind/i.match(x.companyname.to_s)}.each do |product|
-              puts("#{Time.now}: delete_all_bauerfeind_products. #{product.odba_id} #{product.pharmacode} #{product.ean_code} #{migel_code}")
+              puts("#{Time.now}: delete_all_bauerfeind_products. #{product.odba_id} #{product.pharmacode} #{product.ean_code}")
               product.odba_delete
               second += 1
           end
