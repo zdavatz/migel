@@ -3,7 +3,7 @@
 # Migel::Util::Server -- migel -- 02.10.2012 -- yasaka@ywesee.com
 # Migel::Util::Server -- migel -- 31.01.2012 -- mhatakeyama@ywesee.com
 
-require 'sbsm/drbserver'
+require 'sbsm/app'
 require 'migel/util/importer'
 require 'odba/drbwrapper'
 require 'odba/18_19_loading_compatibility'
@@ -28,8 +28,9 @@ end
 
 module Migel
   module Util
-    class Server < SBSM::DRbServer
+    class Server < SBSM::App
       def _admin(src, result, priority=0)
+        @admin_threads ||= ThreadGroup.new
         t = Thread.new {
           Thread.current.abort_on_exception = false
           begin
@@ -182,7 +183,7 @@ module Migel
         if lang.to_s != 'de' and lang.to_s != 'fr'
           lang = 'de'
         end
-        search_migelid_fulltext(query, lang) or search_migelid_by_name(query, lang) 
+        search_migelid_fulltext(query, lang) or search_migelid_by_name(query, lang)
       end
       def sort_select_products(products, sortvalue, reverse = nil)
         products = products.select do |product|
@@ -270,7 +271,7 @@ module Migel
           end
         end
       end
-     
+
       # The following methods are for initial setup
       public
       def init_fulltext_index_tables
@@ -287,7 +288,7 @@ module Migel
       end
       def migelids
          @migelids ||= ODBA.cache.fetch_named('all_migelids', self){
-           {} 
+           {}
          }
       end
       alias :all_migelids :migelids
