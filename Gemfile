@@ -7,11 +7,12 @@ gem 'mail'
 gem 'savon', '0.9.7'
 gem 'mechanize'
 gem 'spreadsheet'
-gem "dbi"# , "0.4.5", :git => 'https://github.com/zdavatz/ruby-dbi.git'
+gem 'dbd-pg', '0.3.9'
+gem 'dbi', :git => 'https://github.com/zdavatz/ruby-dbi'
 gem 'deprecated', '< 3.0.0'
 gem 'sbsm', '>=1.3.0'
 gem 'pg' # for running bin/migeld
- 
+
 group :development do
   gem 'rake'
   gem 'rspec'
