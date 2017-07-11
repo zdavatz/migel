@@ -1,13 +1,12 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-# Admin -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com 
+# Admin -- migel -- 06.01.2012 -- mhatakeyama@ywesee.com
 
 $0 = "migel (Admin-Tool)"
 
 $:.push(File.expand_path('../lib', File.dirname(__FILE__)))
 
 require 'drb'
-require 'sbsm/drb'
 require 'migel'
 require 'migel/config'
 require 'readline'
@@ -39,7 +38,7 @@ while(line = readline(prompt, true))
     break
   when 'bt', 'backtrace'
     if last_error.respond_to?(:backtrace)
-      $stdout.puts last_error.backtrace 
+      $stdout.puts last_error.backtrace
     else
       $stdout.puts 'No Error'
     end
@@ -49,7 +48,7 @@ while(line = readline(prompt, true))
     rescue StandardError, SyntaxError => last_error
       $stdout.puts last_error
     end
-  when /sp\s+(-?\d+)/, /set_priority\s+(-?\d+)/ 
+  when /sp\s+(-?\d+)/, /set_priority\s+(-?\d+)/
     priority = $~[1].to_i
     $stdout.puts "setting Priority to #{priority}"
   else
