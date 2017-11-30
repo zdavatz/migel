@@ -180,7 +180,7 @@ class Importer
     migelid_text.strip!
     type = SALE_TYPES[id.at(4)]
     price = ((row.at(18).to_s[/\d[\d.]*/u].to_f) * 100).round
-    date = Date.parse(row.at(20))
+    date = row.at(20) ? Date.parse(row.at(20)) : nil
     limitation = (row.at(14) == 'L')
     qty = row.at(16).to_i
     unit = row.at(17).to_s
