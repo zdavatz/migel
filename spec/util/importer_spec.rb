@@ -523,11 +523,15 @@ end # describe
 
   describe 'RealWorld: create 3 language specific CSV files from the given xls file' do
     before(:each) do
+      @saved_xls = Migel::Util::Importer::OriginalXLS
       allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
       multilingual = double('multilingual', :de => '')
       product = double('product',:article_name => multilingual)
       migelid = double('migelid',:products => [product])
       allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
+    end
+    after(:each) do
+      Migel::Util::Importer::OriginalXLS = @saved_xls
     end
 
     def setup_importer
@@ -562,17 +566,22 @@ end # describe
           'Groupe de produits No,Limitation Groupe de produits,Groupe de produits,Description Groupes de produits,Catégorie No,Limitation Catégorie,Catégorie,Description Catégorie,Revision Catégorie,Valable à partir du (Revision Catégorie),Sous-catégorie No,Limitation Sous-catégorie,Sous-catégorie,No pos.,Limitation,Dénomination,Quantité,Unité de mesure,Montant,Revision,Valable à partir du',
         'migel_it.csv' => 
           'Gruppi di prodotti No,Limitazione (Gruppi di prodotti),Gruppi di prodotti,Descrizione,Categoria No,Limitazione (Categoria),Categoria,Descrizione Categoria,Revisione Categoria,Valida a partire dal (Revisione Categoria),Sotto-categoria No,Limitazione Sotto-categoria,Sotto-categoria,Numero di posizione,Limitazione,Denominazione,Quantita,Unità,Importo Massimo,Revisione,Valida a partire dal',
-      }.each {
+      }.each do
         |csv_file, firstline|
         expect(baseNames.index(csv_file)).not_to eq(nil)
         lines=IO.readlines(File.join(@importer.data_dir, csv_file))
         # puts "#{csv_file} has  #{lines.size} zeilen"
         expect(lines[1]).to match /^01.,/
         expect(lines[6]).to match /^34.,/
+        next if /_it.csv/.match(csv_file)
         expect(lines[6]).to match /,34\.60\.01\.00\.1,/
-        expect(lines.size).to eq(9)
+        if /_de/.match(csv_file)
+          expect(lines.size).to eq(10)
+        else
+          expect(lines.size).to eq(9)
+        end
         expect(lines.first.chomp).to eq(firstline)
-      }
+      end
       @importer.update_all
       expect(Dir.glob(File.join(@importer.data_dir, '*.csv')).size).to  eq(3)
     end
