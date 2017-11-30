@@ -22,6 +22,7 @@ group :development do
   gem 'webmock'
   gem 'simplecov'
   gem 'rspec-mocks'# , '< 3.0.0'
+  gem 'pry-byebug'
   gem 'travis-lint'
 end
 

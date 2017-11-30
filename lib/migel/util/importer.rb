@@ -55,7 +55,7 @@ class Importer
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
     $stdout.sync = true
     FileUtils.mkdir_p @data_dir
-		@xls_file = File.join(@data_dir, File.basename(OriginalXLS))
+    @xls_file = File.join(@data_dir, File.basename(OriginalXLS))
     @start_time = Time.now
   end
   def date_object(date)
@@ -89,6 +89,8 @@ class Importer
       idx = 0
       CSV.open(csv_name, 'w') do |writer|
         sheet.rows.each do |row|
+          # fix conversion to date
+          row[20] = row[20].strftime('%d.%m.%Y') if row[20].to_s.to_i > 0
           writer << row
           idx += 1
           puts "#{Time.now}: update_all #{@xls_file} at row #{idx}" if idx % 500 == 0
@@ -178,7 +180,7 @@ class Importer
     migelid_text.strip!
     type = SALE_TYPES[id.at(4)]
     price = ((row.at(18).to_s[/\d[\d.]*/u].to_f) * 100).round
-    date = date_object(row.at(20))
+    date = Date.parse(row.at(20))
     limitation = (row.at(14) == 'L')
     qty = row.at(16).to_i
     unit = row.at(17).to_s

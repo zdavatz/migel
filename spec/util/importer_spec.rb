@@ -35,10 +35,6 @@ describe Importer, "Examples" do
     expected = "  5 / 10\tEstimate total: 3.33 [m] It will be done in: 1.67 [m]\n"
     expect(estimate_time(start_time, total, count)).to eq(expected)
   end
-  it "data_object should create Data instance from Switzerland type of date string with '.'" do
-    date = '31.12.2011'
-    expect(@importer.date_object(date)).to eq(Date.new(2011,12,31))
-  end
   it "update_group should update a Group instance when it is found in the database" do
     name  = double('name', :de= => nil)
     group = double('group',
@@ -536,9 +532,9 @@ end # describe
 
     def setup_importer
       @importer = Migel::Util::Importer.new
-      @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL2014_v2.xls'))
+      @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL2014_v3.xls'))
       expect(File.exists?(@test_file)).to be true
-      expect(File.size(@test_file)).to be < 30000
+      expect(File.size(@test_file)).to be < 75000
       @server = Migel::Util::Server.new
       allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
       migelid = double('migelid',:migel_code => '12.34.56.78.9', :delete => true)
@@ -591,6 +587,21 @@ end # describe
       @importer.save_all_products_all_languages
       expect(::Mail::TestMailer.deliveries.size).to eq(3)
       ::Mail::TestMailer.deliveries.each{ |mail| expect(mail.to_s).not_to match /RuntimeError/ }
+    end
+    it "the generated CSV file should have a correct date"  do
+      setup_importer
+      ::Mail.defaults do
+        delivery_method :test
+      end
+      setup_importer
+      Migel::Util::Importer::OriginalXLS = @test_file
+      @importer.update_all
+      expect(@importer.xls_file).to match /MiGeL.xls/
+      files = Dir.glob(File.join(@importer.data_dir, '*.csv'))
+      expect(files.size).to  eq(3)
+      inhalt = IO.read(files.first)
+      first_row = CSV.readlines(files.first)[1]
+      expect(first_row.last).to eq '01.01.1996'
     end
   end
 

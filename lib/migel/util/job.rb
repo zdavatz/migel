@@ -19,7 +19,7 @@ module Job
       ODBA.cache.clean_prefetched
       DRb.install_id_conv ODBA::DRbIdConv.new
       system.peer_cache ODBA.cache unless opts[:readonly] rescue Errno::ECONNREFUSED
-      block.call Migel::Util::Server.new(:auxiliary => true)
+      block.call Migel::Util::Server.new
     ensure
       system.unpeer_cache ODBA.cache unless opts[:readonly]
     end
