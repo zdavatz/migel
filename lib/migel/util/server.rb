@@ -343,7 +343,6 @@ resolve_target: ''
 resolve_origin: ''
 fulltext: true
 init_source: 'all_migelids.values'
-dictionary: 'german'
 EOD
 
         index_definition_migel_fr = YAML.load <<-EOD
@@ -356,7 +355,6 @@ resolve_target: ''
 resolve_origin: ''
 fulltext: true
 init_source: 'all_migelids.values'
-dictionary: 'french'
 EOD
 
         index_definition_migel_product_de = YAML.load <<-EOD
@@ -369,7 +367,6 @@ resolve_target: ''
 resolve_origin: ''
 fulltext: true
 init_source: 'all_products.values'
-dictionary: 'german'
 EOD
 
         index_definition_migel_product_fr = YAML.load <<-EOD
@@ -382,7 +379,6 @@ resolve_target: ''
 resolve_origin: ''
 fulltext: true
 init_source: 'all_products.values'
-dictionary: 'french'
 EOD
         rebuild_fulltext_index_table(index_definition_migel_de)
         rebuild_fulltext_index_table(index_definition_migel_fr)

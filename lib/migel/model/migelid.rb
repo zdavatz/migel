@@ -19,8 +19,7 @@ module Migel
       has_many :products, on_delete(:cascade)
       has_many :accessories
       has_many :migelids
-			attr_accessor :limitation, :price, :type, :qty
-            attr_writer :date
+			attr_accessor :limitation, :price, :type, :qty, :date
       attr_reader  :code
 			alias :pointer_descr :code
       alias :items :products
@@ -39,10 +38,6 @@ module Migel
 			end
       def parent(app = nil)
         @subgroup
-      end
-      def date
-        puts "Returning #{@date}"
-        @date
       end
       def update_multilingual(data, language)
         data.keys.each do |key|

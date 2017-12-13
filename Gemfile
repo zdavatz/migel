@@ -1,17 +1,16 @@
 source "https://rubygems.org"
 
 gem 'facets', '< 2.0.0'
-gem 'odba'
+gem 'odba', '>= 1.1.4'
 gem 'rclconf'
 gem 'mail'
 gem 'savon', '0.9.7'
 gem 'mechanize'
 gem 'spreadsheet'
-gem 'dbd-pg', '0.3.9'
-gem 'dbi', :git => 'https://github.com/zdavatz/ruby-dbi'
+gem 'ydbd-pg', '0.5.4'
 gem 'deprecated', '< 3.0.0'
 gem 'sbsm', '>=1.3.0'
-gem 'pg' # for running bin/migeld
+# gem 'pg' # for running bin/migeld
 
 group :development do
   gem 'rake'
