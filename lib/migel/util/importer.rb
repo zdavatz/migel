@@ -119,6 +119,8 @@ class Importer
         if(id.size > 2)
           migelid = update_migelid(id, subgroup, row, language)
           migel_code_list.delete(migelid.migel_code)
+          migelid.odba_store unless defined?(RSpec)
+          $stderr.puts "#{__LINE__}: odba_store migelid #{migelid.migel_code}"
         end
       end
     end
@@ -144,7 +146,7 @@ class Importer
     text.tr!("\v", " ")
     text.strip!
     group.update_limitation_text(text, language) unless text.empty?
-    group.save
+    group.save; group.odba_store
     group
   end
   def update_subgroup(id, group, row, language)
@@ -152,7 +154,7 @@ class Importer
     subgroup = group.subgroups.find{|sg| sg.code == subgroupcd} || begin
       sg = Migel::Model::Subgroup.new(subgroupcd)
       group.subgroups.push sg
-      group.save
+      group.save; group.odba_store
       sg
     end
     subgroup.group = group
@@ -160,7 +162,7 @@ class Importer
     if text = row.at(7).to_s and !text.empty?
       subgroup.update_limitation_text(text, language) 
     end
-    subgroup.save
+    subgroup.save; subgroup.odba_store
     subgroup
   end
   def update_migelid(id,  subgroup, row, language)
@@ -188,7 +190,7 @@ class Importer
     migelid = subgroup.migelids.find{|mi| mi.code == migelidcd} || begin
       mi = Migel::Model::Migelid.new(migelidcd)
       subgroup.migelids.push mi
-      subgroup.save
+      subgroup.save; subgroup.odba_store
       mi
     end
     migelid.subgroup = subgroup
@@ -202,7 +204,8 @@ class Importer
     }
     migelid.update_multilingual(multilingual_data, language)
     migelid.type  = type
-    migelid.price = price 
+    migelid.price = price
+    puts "Adding #{migelidcd} date #{date}"
     migelid.date  = date
     migelid.limitation = limitation
     migelid.qty = qty if qty > 0
@@ -361,7 +364,7 @@ class Importer
     total = File.readlines(file_name).to_a.length
     count = 0
     # update cache
-    CSV.foreach(file_name, 'r:utf-8') do |line|
+    CSV.foreach(file_name) do |line|
       count += 1
       line[0] = line[0].rjust(9, '0') if line[0] =~ /^\d{8}$/
       migel_code = if line[0] =~ /^\d{9}$/
@@ -409,6 +412,8 @@ class Importer
           product.save
         end
         migelid.save
+        migelid.odba_store
+        $stderr.puts "#{__LINE__}: odba_store migelid #{migelid.migel_code}"
         puts "saving: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
       else
         puts "ignoring: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
@@ -434,6 +439,8 @@ class Importer
       migelid.products.each do |product|
         product.save
       end
+      migelid.odba_store
+      $stderr.puts "#{__LINE__}: odba_store migelid #{migelid.migel_code}"
       migelid.save
     end
   end

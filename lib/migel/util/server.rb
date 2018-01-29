@@ -59,77 +59,6 @@ module Migel
       def unpeer_cache cache
         ODBA.unpeer cache
       end
-      def migrate_utf8
-        # group
-        Migel::Model::Group.all.each do |group|
-          group.code.force_encoding('utf-8') if group.code
-          group.limitation_text.force_encoding('utf-8') if group.limitation_text
-          group.name.force_encoding('utf-8') if group.name
-          group.save
-        end
-
-        # subgroup
-        Migel::Model::Subgroup.all.each do |subgroup|
-          subgroup.code.force_encoding('utf-8') if subgroup.code
-          subgroup.limitation_text.force_encoding('utf-8') if subgroup.limitation_text
-          subgroup.name.force_encoding('utf-8') if subgroup.name
-          subgroup.save
-        end
-
-        # migelid
-        Migel::Model::Migelid.all.each do |migelid|
-          migelid.code.force_encoding('utf-8') if migelid.code
-          migelid.limitation_text.force_encoding('utf-8') if migelid.limitation_text
-          migelid.migelid_text.force_encoding('utf-8') if migelid.migelid_text
-          migelid.name.force_encoding('utf-8') if migelid.name
-          migelid.unit.force_encoding('utf-8') if migelid.unit
-          migelid.save
-        end
-
-        # product
-        Migel::Model::Product.all.each do |product|
-          product.pharmacode.force_encoding('utf-8') if product.pharmacode
-          product.ean_code.force_encoding('utf-8') if product.ean_code
-          product.article_name.force_encoding('utf-8') if product.article_name
-          product.companyname.force_encoding('utf-8') if product.companyname
-          product.companyean.force_encoding('utf-8') if product.companyean
-          product.size.force_encoding('utf-8') if product.size
-          product.ppha.force_encoding('utf-8') if product.ppha
-          product.ppub.force_encoding('utf-8') if product.ppub
-          product.factor.force_encoding('utf-8') if product.factor
-          product.pzr.force_encoding('utf-8') if product.pzr
-          product.status.force_encoding('utf-8') if product.status
-          product.datetime.force_encoding('utf-8') if product.datetime
-          product.stdate.force_encoding('utf-8') if product.stdate
-          product.language.force_encoding('utf-8') if product.language
-          product.save
-        end
-      end
-      # after migrate_utf8
-      # this ran on Ruby 1.8.6 to get dates from the old database
-      def output_migel_code_and_date(file = 'migelcode_date.dat')
-        open(file, "w") do |out|
-          Migel::Model::Migelid.all.each do |migelid|
-            if migelid.date
-              out.print migelid.migel_code, ",", migelid.date.strftime("%Y-%m-%d"), "\n"
-            else
-              out.print migelid.migel_code, ",\n"
-            end
-          end
-        end
-      end
-      # this ran on Ruby 1.9.3 to update dates in the new database
-      def update_migelid_date(file = 'migelcode_date.dat')
-        File.readlines(file).each do |line|
-          item = line.chomp.split(/,/)
-          migel_code = item[0]
-          date = item[1]
-          if date and migelids[migel_code]
-            migelids[migel_code].date = Date.parse(date)
-            migelids[migel_code].save
-          end
-        end
-      end
       def export_products(file_name = '/var/www/migel/data/csv/migel_all_products_de.csv', lang = 'de')
         CSV.open(file_name, 'w') do |writer|
           all_products.values.sort_by{|prod| prod.migel_code}.each do |product|
@@ -183,7 +112,7 @@ module Migel
         if lang.to_s != 'de' and lang.to_s != 'fr'
           lang = 'de'
         end
-        search_migelid_fulltext(query, lang) or search_migelid_by_name(query, lang)
+        search_migelid_by_name(query, lang)
       end
       def sort_select_products(products, sortvalue, reverse = nil)
         products = products.select do |product|
