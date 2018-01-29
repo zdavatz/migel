@@ -18,6 +18,17 @@ Use bundler to install all dependencies mentioned in the Gemfile
 
 * sudo gem install migel
 
+### Non standard path of postgres
+
+If you have a non standard path of postgres use something like
+
+    gem install pg -- ---with-pg-config=/usr/local/pg-10_1/bin/pg_config
+
+Or if you are using bundler
+
+    bundle config build.pg ----with-pg-config=/usr/local/pg-10_1/bin/pg_config
+    bundle install
+
 ## TEST/COVERAGE
 
 Don't forget to manually call  jobs/update_migel_products_with_report, as this is a job run only twice a year!
