@@ -204,9 +204,13 @@ module Migel
       # The following methods are for initial setup
       public
       def init_fulltext_index_tables
+        puts "#{Time.now}:Starting init_fulltext_index_tables. init_migelids"
         init_migelids
+        puts "#{Time.now}: ..init_products"
         init_products
+        puts "#{Time.now}: ..rebuild_fulltext_index_tables"
         rebuild_fulltext_index_tables
+        puts "#{Time.now}:Finished init_fulltext_index_tables"
       end
       def init_migelids
         clear_migelids

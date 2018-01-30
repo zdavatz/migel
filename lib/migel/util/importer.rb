@@ -66,6 +66,7 @@ class Importer
   end
 
   def update_all
+    puts "#{Time.now}: update_all using #{@xls_file}"
     base = File.basename(@xls_file, '.xls')
     xls = File.open(@xls_file, 'wb+')
     open(OriginalXLS) {|f| xls.write(f.read ) }
@@ -74,7 +75,7 @@ class Importer
 
     latest = File.join(@data_dir, base + '-latest.xls')
     target = File.join(@data_dir, "#{base}-#{Time.now.strftime('%Y.%m.%d')}.xls")
-    if !File.exist?(target) or File.read(target) != actContent
+    if !File.exist?(target) || File.read(target) != actContent
       FileUtils.cp(@xls_file, target, :verbose => true, :preserve => true)
     end
     if File.exist?(latest) && File.read(latest) == actContent
@@ -93,7 +94,7 @@ class Importer
           row[20] = row[20].strftime('%d.%m.%Y') if row[20].to_s.to_i > 0
           writer << row
           idx += 1
-          puts "#{Time.now}: update_all #{@xls_file} at row #{idx}" if idx % 500 == 0
+          puts "#{Time.now}: update_all #{language} #{@xls_file} at row #{idx} #{row[13]}" if idx % 500 == 0
         end
       end
       update(csv_name, language) #   unless defined?(RSpec)
@@ -119,8 +120,10 @@ class Importer
         if(id.size > 2)
           migelid = update_migelid(id, subgroup, row, language)
           migel_code_list.delete(migelid.migel_code)
-          migelid.odba_store unless defined?(RSpec)
-          $stderr.puts "#{__LINE__}: odba_store migelid #{migelid.migel_code}"
+          if migelid.date && migelid.date.year < 1900
+            $stderr.puts "#{__LINE__}: save migelid #{migelid.migel_code} #{migelid.date}"
+            # require 'pry'; binding.pry
+          end
         end
       end
     end
@@ -139,14 +142,14 @@ class Importer
   end
   def update_group(id, row, language)
     groupcd = id.at(0)
-    puts "#{Time.now}: update_group #{id} groupcd #{groupcd} #{language}"
+    puts "#{Time.now}: update_group #{id} groupcd #{groupcd} #{language}" if id.size < 5
     group = Migel::Model::Group.find_by_code(groupcd) || Migel::Model::Group.new(groupcd)
     group.name.send(language.to_s + '=', row.at(2).to_s)
     text = row.at(3).to_s
     text.tr!("\v", " ")
     text.strip!
     group.update_limitation_text(text, language) unless text.empty?
-    group.save; group.odba_store
+    group.save
     group
   end
   def update_subgroup(id, group, row, language)
@@ -154,7 +157,7 @@ class Importer
     subgroup = group.subgroups.find{|sg| sg.code == subgroupcd} || begin
       sg = Migel::Model::Subgroup.new(subgroupcd)
       group.subgroups.push sg
-      group.save; group.odba_store
+      group.save
       sg
     end
     subgroup.group = group
@@ -162,7 +165,7 @@ class Importer
     if text = row.at(7).to_s and !text.empty?
       subgroup.update_limitation_text(text, language) 
     end
-    subgroup.save; subgroup.odba_store
+    subgroup.save
     subgroup
   end
   def update_migelid(id,  subgroup, row, language)
@@ -190,7 +193,7 @@ class Importer
     migelid = subgroup.migelids.find{|mi| mi.code == migelidcd} || begin
       mi = Migel::Model::Migelid.new(migelidcd)
       subgroup.migelids.push mi
-      subgroup.save; subgroup.odba_store
+      subgroup.save
       mi
     end
     migelid.subgroup = subgroup
@@ -205,8 +208,11 @@ class Importer
     migelid.update_multilingual(multilingual_data, language)
     migelid.type  = type
     migelid.price = price
-    puts "Adding #{migelidcd} date #{date}"
     migelid.date  = date
+    if migelid.date && migelid.date.year < 1900
+      $stderr.puts "#{__LINE__}: Problem with #{migelid.migel_code} #{migelid.date}"
+      # require 'pry'; binding.pry
+    end
     migelid.limitation = limitation
     migelid.qty = qty if qty > 0
 
@@ -411,9 +417,8 @@ class Importer
         migelid.products.each do |product|
           product.save
         end
+        $stderr.puts "#{__LINE__}: saving migelid #{migelid.migel_code} #{migelid.date}"
         migelid.save
-        migelid.odba_store
-        $stderr.puts "#{__LINE__}: odba_store migelid #{migelid.migel_code}"
         puts "saving: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
       else
         puts "ignoring: " + estimate_time(start_time, total, count, ' ') + "migel_code: #{migel_code}" if estimate
@@ -439,8 +444,7 @@ class Importer
       migelid.products.each do |product|
         product.save
       end
-      migelid.odba_store
-      $stderr.puts "#{__LINE__}: odba_store migelid #{migelid.migel_code}"
+      $stderr.puts "#{__LINE__}: saving migelid #{migelid.migel_code} #{migelid.date}"
       migelid.save
     end
   end
