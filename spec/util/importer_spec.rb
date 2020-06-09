@@ -26,7 +26,7 @@ describe Importer, "Examples" do
     count = 30
     expected = " 30 / 100\tEstimate total: 3.33 [h] It will be done in: 2.33 [h]\n"
     expect(estimate_time(start_time, total, count)).to eq(expected)
-    count = 60 
+    count = 60
     expected = " 60 / 100\tEstimate total: 1.67 [h] It will be done in: 40.00 [m]\n"
     expect(estimate_time(start_time, total, count)).to eq(expected)
     start_time = 3500.0
@@ -105,6 +105,7 @@ describe Importer, "Examples" do
                    :subgroup= => nil,
                    :update_multilingual => nil,
                    :code   => '12.34.5',
+                   :date   => nil,
                    :save   => nil,
                    :type=  => nil,
                    :price= => nil,
@@ -133,6 +134,7 @@ describe Importer, "Examples" do
                    :subgroup= => nil,
                    :update_multilingual => nil,
                    :code   => '12.00.1',
+                   :date   => nil,
                    :save   => nil,
                    :type=  => nil,
                    :price= => nil,
@@ -172,6 +174,7 @@ describe Importer, "Examples" do
                      :price= => nil,
                      :date=  => nil,
                      :qty=   => nil,
+                     :date   => nil,
                      :limitation= => nil,
                      :migel_code  => '12.34.56.78.9',
                      :delete => 'delete_migelid',
@@ -203,7 +206,7 @@ describe Importer, "Examples" do
       allow(ODBA.cache).to receive(:index_keys).and_return(['12', '12.34', '12.34.56.78.9'])
 
       language = 'de'
-      expect do 
+      expect do
         @importer.update('path', language)
       end.not_to raise_error
       expect(@importer.migel_code_list).to eq([])
@@ -212,7 +215,7 @@ describe Importer, "Examples" do
       allow(CSV).to receive(:readlines).and_return([0,row])
       row[13] = ''
       row[4]  = '12.34.56.78.9'
-      expect do 
+      expect do
         @importer.update('path', language)
       end.not_to raise_error
     end
@@ -325,7 +328,8 @@ describe Importer, "Examples" do
       migelid = double('migelid',
                      :products => [@product],
                      :migel_code => 'migel_code',
-                     :save => nil
+                     :date => nil,
+                     :save => nil,
                     )
       allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
 
@@ -335,7 +339,7 @@ describe Importer, "Examples" do
       record = {:pharmacode => 'pharmacode', :article_name => 'article_name'}
       table = [record]
       allow(ODDB::Swissindex).to receive(:search_migel_table).and_return(table)
-    
+
       expect(@importer.update_products_by_migel_code('migel_code', 'de')).to be_nil
     end
     it "import_all_products_from_csv should update products by a csv file" do
@@ -347,6 +351,7 @@ describe Importer, "Examples" do
                      :add_product => @product,
                      :save => nil,
                      :products => [@product],
+                     :date => nil,
                     )
       migelid2 = double('migelid2',
                      :migel_code => 'migel_code',
@@ -354,6 +359,7 @@ describe Importer, "Examples" do
                      :save => nil,
                      :delete => nil,
                      :products => [@product],
+                     :date => nil,
                     )
       allow(migelid).to receive(:dup).with(no_args).and_return(migelid2)
       allow(@product).to receive(:delete)
@@ -410,6 +416,7 @@ describe Importer, "Examples" do
     migelid = double('migelid',
                    :products => [product],
                    :migel_code => 'migel_code',
+                   :date => nil,
                    :save => nil
                   )
     allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
@@ -560,11 +567,11 @@ end # describe
       expect(@importer.xls_file).to match /MiGeL.xls/
       expect(Dir.glob(File.join(@importer.data_dir, '*.csv')).size).to  eq(3)
       baseNames = Dir.glob(File.join(@importer.data_dir, '*.csv')).collect{ |f| File.basename(f) }
-      { 'migel_de.csv' => 
+      { 'migel_de.csv' =>
           'Produktegruppe Nr,Limitation Produktegruppe,Produktegruppe,Beschreibung Produktegruppe,Kategorie Nr,Limitation Kategorie,Kategorie,Beschreibung Kategorie,Revision Kaegorie,Revision Kat Gültig ab,Unterkategorie Nr,Limitation Unterkategorie,Unterkategorie,Positions Nummer,Limitation,Bezeichnung,Menge,Einheit,Höchstvergütungsbetrag,Revision Position,Revision Gültig ab',
-        'migel_fr.csv' => 
+        'migel_fr.csv' =>
           'Groupe de produits No,Limitation Groupe de produits,Groupe de produits,Description Groupes de produits,Catégorie No,Limitation Catégorie,Catégorie,Description Catégorie,Revision Catégorie,Valable à partir du (Revision Catégorie),Sous-catégorie No,Limitation Sous-catégorie,Sous-catégorie,No pos.,Limitation,Dénomination,Quantité,Unité de mesure,Montant,Revision,Valable à partir du',
-        'migel_it.csv' => 
+        'migel_it.csv' =>
           'Gruppi di prodotti No,Limitazione (Gruppi di prodotti),Gruppi di prodotti,Descrizione,Categoria No,Limitazione (Categoria),Categoria,Descrizione Categoria,Revisione Categoria,Valida a partire dal (Revisione Categoria),Sotto-categoria No,Limitazione Sotto-categoria,Sotto-categoria,Numero di posizione,Limitazione,Denominazione,Quantita,Unità,Importo Massimo,Revisione,Valida a partire dal',
       }.each do
         |csv_file, firstline|

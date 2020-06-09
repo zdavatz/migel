@@ -1,2 +1,5 @@
-require 'simplecov'
-SimpleCov.start
+begin
+  require 'pry'
+rescue LoadError
+  # ignore error for Travis-CI
+end

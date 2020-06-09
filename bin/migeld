@@ -17,9 +17,7 @@ module Migel
     @server = server
 
     url = @config.server_url
-    url.untaint
     DRb.start_service(url, server)
-    $SAFE = 1
     logger.info('start') { sprintf("starting migel-server on %s", url) }
     DRb.thread.join
   rescue => error

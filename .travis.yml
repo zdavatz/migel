@@ -1,22 +1,24 @@
 language: ruby
-before_install:
-  - gem install bundler
-
 cache: bundler
+sudo: false
+bundler_args: --without debugger
+rvm:
+  - 2.7.1
+  - 2.5.0
+  - ruby-head
 
-install:
-  - bundle install --without debugger
+matrix:
+  allow_failures:
+    - rvm: ruby-head
+    - rvm: 2.5.0
 
 script:
   - bundle exec rake spec
 
 notifications:
   email:
-  - ngiger@ywesee.com
-rvm:
-  - ruby-head
-  - 2.4.2
-  - 2.5.0
-matrix:
-  allow_failures:
-    - rvm: ruby-head
+    recipients:
+      - ngiger@ywesee.com
+
+env:
+  - de_CH.UTF-8 LANGUAGE=de_CH

@@ -122,7 +122,6 @@ class Importer
           migel_code_list.delete(migelid.migel_code)
           if migelid.date && migelid.date.year < 1900
             $stderr.puts "#{__LINE__}: save migelid #{migelid.migel_code} #{migelid.date}"
-            # require 'pry'; binding.pry
           end
         end
       end
@@ -163,7 +162,7 @@ class Importer
     subgroup.group = group
     subgroup.name.send(language.to_s + '=', row.at(6).to_s)
     if text = row.at(7).to_s and !text.empty?
-      subgroup.update_limitation_text(text, language) 
+      subgroup.update_limitation_text(text, language)
     end
     subgroup.save
     subgroup
@@ -211,7 +210,6 @@ class Importer
     migelid.date  = date
     if migelid.date && migelid.date.year < 1900
       $stderr.puts "#{__LINE__}: Problem with #{migelid.migel_code} #{migelid.date}"
-      # require 'pry'; binding.pry
     end
     migelid.limitation = limitation
     migelid.qty = qty if qty > 0
@@ -341,7 +339,7 @@ class Importer
     migel_codes = migel_code_list.select do |migel_code|
       migelid = Migel::Model::Migelid.find_by_migel_code(migel_code) and !migelid.products.empty? and migelid.products.first.article_name.send(lang).to_s.empty?
     end
-    if output_filename 
+    if output_filename
       File.open(output_filename, 'w') do |out|
         out.print migel_codes.join("\n"), "\n"
       end

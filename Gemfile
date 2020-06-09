@@ -1,17 +1,18 @@
 source "https://rubygems.org"
 
-gem 'facets', '< 2.0.0'
-gem 'odba', '>= 1.1.5'
+gem 'odba', '>= 1.1.6'
 gem 'rclconf'
 gem 'mail'
-gem 'savon', '0.9.7'
+gem 'savon'#, '0.9.7'
 gem 'mechanize'
 gem 'spreadsheet'
 gem 'deprecated', '< 3.0.0'
 gem 'sbsm', '>=1.5.8'
 gem 'pg', '>= 1.0.0' # for running bin/migeld
+gem 'activesupport' # for sinularize
 
 group :development do
+  gem 'deep-cover'
   gem 'rake'
   gem 'rspec'
   gem 'flexmock', '< 2.0.0'

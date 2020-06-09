@@ -2,13 +2,11 @@
 # encoding: utf-8
 # Migel::Model::SuperModel -- migel -- 02.10.2012 -- yasaka@ywesee.com
 # Migel::Model::SuperModel -- migel -- 24.01.2012 -- mhatakeyama@ywesee.com
-
-require 'fixes/singular'
-require 'facet/module/basename'
+require 'active_support/inflector' # for singularize
 
 module Migel
   # forward definitions (circular dependency Model <-> M10lDocument)
-  class ModelSuper; end 
+  class ModelSuper; end
   module Util; class M10lDocument < ModelSuper; end; end
   class ModelSuper
     class Predicate
@@ -24,7 +22,7 @@ module Migel
               cascade(action, element)
             end
           else
-            next_level.each { |element| 
+            next_level.each { |element|
               cascade(action, element)
             }
           end
@@ -65,7 +63,7 @@ module Migel
         predicates.each { |predicate|
           if(predicate.action == :method_missing)
             predicate.delegators.each { |key|
-              define_method(key) { 
+              define_method(key) {
                 if(group = instance_variable_get(varname))
                   group.send(key)
                 end
@@ -96,14 +94,14 @@ module Migel
             instance_variable_set(varname, Array.new)
           end
         }
-        define_method("add_#{plural.to_s.singular}") { |inst|
+        define_method("add_#{plural.to_s.singularize}") { |inst|
           container = self.send(plural)
           unless(container.any? { |other| inst.eql? other })
-            container.push(inst) 
+            container.push(inst)
           end
           inst
         }
-        define_method("remove_#{plural.to_s.singular}") { |inst|
+        define_method("remove_#{plural.to_s.singularize}") { |inst|
           self.send(plural).delete_if { |other| inst.eql? other }
         }
         connectors.push(varname)
@@ -153,12 +151,16 @@ module Migel
             instance_variable_set("@#{key}", Util::Multilingual.new)
           end
         }
-        define_method(:to_s) { 
+        define_method(:to_s) {
           self.send(key).to_s
         }
       end
       def singular
-        basename.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
+        if respond_to?(:basename)
+          basename.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
+        else
+          self.to_s.split('::').last.downcase.to_s.singularize
+        end
       end
       def serialize(key)
       end
