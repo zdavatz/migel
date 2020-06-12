@@ -51,6 +51,22 @@ class Importer
     '2' => :rent,
     '3' => :both,
   }
+  Produktegruppe_Nr = 0
+  Limitation_Produktegruppe = 1
+  Produktegruppe = 2
+  Beschreibung_Produktegruppe = 3
+  Kategorie_Nr = 4 #  Kategorie Nr
+  Kategorie  = 6
+  Beschreibung_Kategorie  = 7
+  Unterkategorie = 12
+  Positions_Nummer = 15
+  Limitation = 16
+  Bezeichnung = 17
+  Menge = 18
+  Einheit = 19
+  Max_Price = 20 #      Höchstvergütungsbetrag =
+  Revision_Valid_since = 22 # Revision Gültig ab
+
   def initialize
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
     $stdout.sync = true
@@ -65,11 +81,35 @@ class Importer
     end
   end
 
+  def check_headers(row)
+    expected = {
+      Produktegruppe_Nr => 'Produktegruppe Nr',
+      Produktegruppe => 'Produktegruppe',
+      Beschreibung_Produktegruppe => 'Beschreibung Produktegruppe',
+      Kategorie_Nr => 'Kategorie Nr',
+      Kategorie  => 'Kategorie',
+      Beschreibung_Kategorie  => 'Beschreibung Kategorie',
+      Unterkategorie => 'Unterkategorie',
+      Positions_Nummer => 'Positions Nummer',
+      Limitation => 'Limitation',
+      Bezeichnung => 'Bezeichnung',
+      Menge => 'Menge',
+      Einheit => 'Einheit',
+      Max_Price => 'Höchstvergütungsbetrag' ,
+      Revision_Valid_since => 'Revision Gültig ab',
+    }
+    expected.each do |key, value|
+      next if row[key].eql?(value)
+      require 'pry'; binding.pry
+      raise "Unexpected name #{row[key]} for key #{key.to_s} #{value}"
+    end
+  end
+
   def update_all
     puts "#{Time.now}: update_all using #{@xls_file}"
     base = File.basename(@xls_file, '.xls')
     xls = File.open(@xls_file, 'wb+')
-    open(OriginalXLS) {|f| xls.write(f.read ) }
+    URI.open(OriginalXLS) {|f| xls.write(f.read ) }
     xls.close
     actContent = File.read(@xls_file)
 
@@ -86,15 +126,16 @@ class Importer
     LANGUAGE_NAMES.each{
         |language, name|
       sheet = book.worksheet(name)
+      check_headers(sheet.rows.first) if language.eql?('de')
       csv_name = File.join(@data_dir, "migel_#{language}.csv")
       idx = 0
       CSV.open(csv_name, 'w') do |writer|
         sheet.rows.each do |row|
+          next unless row.first
           # fix conversion to date
-          row[20] = row[20].strftime('%d.%m.%Y') if row[20].to_s.to_i > 0
           writer << row
           idx += 1
-          puts "#{Time.now}: update_all #{language} #{@xls_file} at row #{idx} #{row[13]}" if idx % 500 == 0
+          puts "#{Time.now}: update_all #{language} #{@xls_file} at row #{idx} #{row.at(Positions_Nummer)}" if idx % 500 == 0
         end
       end
       update(csv_name, language) #   unless defined?(RSpec)
@@ -106,9 +147,9 @@ class Importer
     puts "#{Time.now}: update #{path} #{language}"
     # update Group, Subgroup, Migelid data from a csv file
     CSV.readlines(path)[1..-1].each do |row|
-      id = row.at(13).to_s.split('.')
+      id = row.at(Positions_Nummer).to_s.split('.')
       if(id.empty?)
-        id = row.at(4).to_s.split('.')
+        id = row.at(Kategorie_Nr).to_s.split('.')
       else
         id[-1].replace(id[-1][0,1])
       end
@@ -140,19 +181,28 @@ class Importer
     end
   end
   def update_group(id, row, language)
-    groupcd = id.at(0)
-    puts "#{Time.now}: update_group #{id} groupcd #{groupcd} #{language}" if id.size < 5
-    group = Migel::Model::Group.find_by_code(groupcd) || Migel::Model::Group.new(groupcd)
-    group.name.send(language.to_s + '=', row.at(2).to_s)
-    text = row.at(3).to_s
-    text.tr!("\v", " ")
-    text.strip!
-    group.update_limitation_text(text, language) unless text.empty?
-    group.save
-    group
+    groupcd = id.at(Produktegruppe_Nr)
+    begin
+      puts "#{Time.now}: update_group #{id} groupcd #{groupcd} #{language}" if id.size < 5
+      group = Migel::Model::Group.find_by_code(groupcd) || Migel::Model::Group.new(groupcd)
+      unless group
+          puts "#{Time.now}: UNABLE to update_group #{id} groupcd #{groupcd} #{language}"
+        return
+      end
+      group.name.send(language.to_s + '=', row.at(Produktegruppe).to_s)
+      text = row.at(Beschreibung_Produktegruppe).to_s
+      text.tr!("\v", " ")
+      text.dup.strip!
+      group.update_limitation_text(text, language) unless text.empty?
+      group.save
+      group
+    rescue => error
+        require 'pry'; binding.pry
+        0
+      end
   end
   def update_subgroup(id, group, row, language)
-    subgroupcd = id.at(1)
+    subgroupcd = id.at(Limitation_Produktegruppe)
     subgroup = group.subgroups.find{|sg| sg.code == subgroupcd} || begin
       sg = Migel::Model::Subgroup.new(subgroupcd)
       group.subgroups.push sg
@@ -160,8 +210,8 @@ class Importer
       sg
     end
     subgroup.group = group
-    subgroup.name.send(language.to_s + '=', row.at(6).to_s)
-    if text = row.at(7).to_s and !text.empty?
+    subgroup.name.send(language.to_s + '=', row.at(Kategorie).to_s)
+    if text = row.at(Beschreibung_Kategorie).to_s and !text.empty?
       subgroup.update_limitation_text(text, language)
     end
     subgroup.save
@@ -170,8 +220,8 @@ class Importer
   def update_migelid(id,  subgroup, row, language)
     # take data from csv
     migelidcd = id[2,3].join(".")
-    name = row.at(12).to_s
-    migelid_text = row.at(15).gsub(/[ \t]+/u, " ")
+    name = row.at(Unterkategorie).to_s
+    migelid_text = row.at(Bezeichnung).gsub(/[ \t]+/u, " ")
     migelid_text.tr!("\v", "\n")
     limitation_text = if(idx = migelid_text.index(/Limitation|Limitazione/u))
                         migelid_text.slice!(idx..-1).strip
@@ -183,18 +233,28 @@ class Importer
     end
     migelid_text.strip!
     type = SALE_TYPES[id.at(4)]
-    price = ((row.at(18).to_s[/\d[\d.]*/u].to_f) * 100).round
-    date = row.at(20) ? Date.parse(row.at(20)) : nil
-    limitation = (row.at(14) == 'L')
-    qty = row.at(16).to_i
-    unit = row.at(17).to_s
+    price = ((row.at(Max_Price).to_s[/\d[\d.]*/u].to_f) * 100).round
+    begin
+      date = row.at(Revision_Valid_since) ? Date.parse(row.at(Revision_Valid_since)) : nil
+    rescue => error
+      puts error
+      0
+    end
+    limitation = (row.at(Limitation) == 'L')
+    qty = row.at(Menge).to_i
+    unit = row.at(Einheit).to_s
     # save instance
-    migelid = subgroup.migelids.find{|mi| mi.code == migelidcd} || begin
+    begin
+    migelid = subgroup.migelids.find{|mi| mi.respond_to?(:code) &&    mi.code == migelidcd} || begin
       mi = Migel::Model::Migelid.new(migelidcd)
       subgroup.migelids.push mi
       subgroup.save
       mi
     end
+  rescue => error
+    require 'pry'; binding.pry
+    0
+  end
     migelid.subgroup = subgroup
     migelid.save
     migelid.limitation_text(true)
@@ -216,10 +276,16 @@ class Importer
 
     if(id[3] != "00")
       1.upto(3) { |num|
+                  begin
         micd =  [id[2], '00', num].join('.')
-        if mi = subgroup.migelids.find{|m| m.code == micd}
+        if mi = subgroup.migelids.find{|m| m.respond_to?(:code) && m.code == micd}
           migelid.add_migelid(mi)
         end
+                rescue => error
+#              require 'pry'; binding.pry
+                puts "migel #{id} #{group} #{error}"
+                0
+                end
       }
     end
 

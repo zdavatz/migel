@@ -543,7 +543,7 @@ end # describe
 
     def setup_importer
       @importer = Migel::Util::Importer.new
-      @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL2014_v3.xls'))
+      @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL-2020.06.10.xls'))
       expect(File.exists?(@test_file)).to be true
       expect(File.size(@test_file)).to be < 75000
       @server = Migel::Util::Server.new

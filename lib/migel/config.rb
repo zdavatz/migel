@@ -17,7 +17,7 @@ module Migel
     'db_auth'           => 'migel',
     'persistence'       => 'odba',
     'server_name'       => 'migel',
-    'server_url'        => 'druby://localhost:33000',
+    'server_url'        => 'druby://127.0.0.1:33000',
     'migel_dir'         => default_dir,
     'log_file'          => STDERR,
     'log_level'         => 'INFO',
@@ -35,4 +35,6 @@ module Migel
   config = RCLConf::RCLConf.new(ARGV, defaults)
   config.load(config.config)
   @config = config
+  require 'migel/util/logger'
+  logger.info "server_url set to: #{config.server_url}"
 end
