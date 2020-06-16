@@ -7,6 +7,8 @@ require 'migel/config'
 require 'migel/util/server'
 require 'migel/model'
 require 'migel/persistence/odba'
+$stdout.sync = true
+$stderr.sync = true
 
 module Migel
   module Util

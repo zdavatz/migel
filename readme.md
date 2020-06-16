@@ -39,8 +39,10 @@ The coverage output can be found under coverage/index.html.
 
 ## Overview of jobs/update_migel_products
 
+jobs/update_migel calls update_all in
 lib/migel/util/importer.rb:
 * ODDB::Swissindex::SwissindexMigel is used to get list of all migel_id
+  MiGeL.xls downloaded from https://github.com/zdavatz/oddb2xml_files/raw/master/MiGeL.xls
 * save_all_products
 ** saves /migel_products_de.csv.
 ** For each migel_id search_migel_table is called.
