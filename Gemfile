@@ -17,7 +17,7 @@ group :development do
   gem 'rspec'
   gem 'flexmock', '< 2.0.0'
   gem 'rack', '< 3.0.0'
-  gem 'json', '< 2.0.0'
+  gem 'json', '< 3.0.0'
   gem 'webmock'
   gem 'simplecov'
   gem 'rspec-mocks'# , '< 3.0.0'
