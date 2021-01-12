@@ -2,6 +2,7 @@ language: ruby
 cache: bundler
 bundler_args: --without debugger
 rvm:
+  - 3.0.0
   - 2.7.1
   - 2.5.0
   - ruby-head

@@ -1,5 +1,6 @@
 source "https://rubygems.org"
 
+gem 'webrick'
 gem 'odba', '>= 1.1.6'
 gem 'rclconf'
 gem 'mail'
