@@ -100,7 +100,6 @@ class Importer
     }
     expected.each do |key, value|
       next if row[key].eql?(value)
-      require 'pry'; binding.pry
       raise "Unexpected name #{row[key]} for key #{key.to_s} #{value}"
     end
   end
@@ -197,7 +196,6 @@ class Importer
       group.save
       group
     rescue => error
-        require 'pry'; binding.pry
         0
       end
   end
@@ -252,7 +250,6 @@ class Importer
       mi
     end
   rescue => error
-    require 'pry'; binding.pry
     0
   end
     migelid.subgroup = subgroup
