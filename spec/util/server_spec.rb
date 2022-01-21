@@ -149,7 +149,7 @@ describe Server do
     allow(ODBA.cache).to receive(:fetch_named).and_return({})
     allow(@server.products).to receive(:odba_store)
 
-    index_definition = YAML.load <<-EOD
+    index_definition_text = <<-EOD
 --- !ruby/object:ODBA::IndexDefinition
 index_name: 'migel_fulltext_index_de'
 origin_klass: 'Migel::Model::Migelid'
@@ -161,7 +161,7 @@ fulltext: true
 init_source: 'all_migelids.values'
 dictionary: 'german'
 EOD
-
+    index_definition = YAML.safe_load(index_definition_text, [ODBA::IndexDefinition])
     expect(@server.rebuild_fulltext_index_table(index_definition)).to eq('fill_index')
   end
   it "rebuild_fulltext_index_tables should build 4 tables" do
@@ -182,7 +182,7 @@ EOD
     allow(ODBA.cache).to receive(:fetch_named).and_return({})
     allow(@server.products).to receive(:odba_store)
 
-    index_definition = YAML.load <<-EOD
+    index_definition_text = <<-EOD
 --- !ruby/object:ODBA::IndexDefinition
 index_name: 'migel_fulltext_index_de'
 origin_klass: 'Migel::Model::Migelid'
@@ -194,6 +194,7 @@ fulltext: true
 init_source: 'all_migelids.values'
 dictionary: 'german'
 EOD
+    index_definition = YAML.safe_load(index_definition_text, permitted_classes: [ODBA::IndexDefinition])
 
     expect do
       expect(@server.rebuild_fulltext_index_table(index_definition)).to eq('fill_index')

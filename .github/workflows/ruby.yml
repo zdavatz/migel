@@ -15,18 +15,18 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu
+  # see https://github.com/ruby/setup-ruby
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu]
-        ruby: [2.7, 3.0, 3.1]
+        os: [ubuntu-latest]
+        ruby: [2.7, '3.0', 3.1]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
     - name: Run tests via rake spec test
       run: bundle exec rake spec
