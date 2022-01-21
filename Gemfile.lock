@@ -147,6 +147,9 @@ GEM
       hashdiff (>= 0.4.0, < 2.0.0)
     webrick (1.7.0)
     webrobots (0.1.2)
+    ydbd-pg (0.5.8)
+      pg
+      ydbi (= 0.5.8)
     ydbi (0.5.8)
       deprecated (= 2.0.1)
 
@@ -178,6 +181,7 @@ DEPENDENCIES
   travis-lint
   webmock
   webrick
+  ydbd-pg
   ydbi
 
 BUNDLED WITH

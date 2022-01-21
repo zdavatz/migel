@@ -4,6 +4,7 @@ gem 'net-imap', require: false
 gem 'net-pop', require: false
 
 gem 'ydbi'
+gem 'ydbd-pg'
 gem 'webrick'
 gem 'odba', '>= 1.1.6'
 gem 'rclconf'
