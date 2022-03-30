@@ -1,118 +1,93 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (6.1.1)
+    activesupport (7.0.1)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
-      zeitwerk (~> 2.3)
     addressable (2.8.0)
       public_suffix (>= 2.0.2, < 5.0)
     akami (1.3.1)
       gyoku (>= 0.4.0)
       nokogiri
-    ast (2.4.1)
-    backports (3.20.1)
-    binding_of_caller (1.0.0)
-      debug_inspector (>= 0.0.1)
     builder (3.2.4)
-    byebug (11.1.3)
-    chrono_logger (1.1.1)
-    coderay (1.1.3)
-    columnize (0.9.0)
-    concurrent-ruby (1.1.7)
-    connection_pool (2.2.3)
+    chrono_logger (1.1.2)
+    concurrent-ruby (1.1.9)
+    connection_pool (2.2.5)
     crack (0.4.5)
       rexml
-    debug_inspector (1.0.0)
-    debugger (1.6.8)
-      columnize (>= 0.3.1)
-      debugger-linecache (~> 1.2.0)
-      debugger-ruby_core_source (~> 1.3.5)
-    debugger-linecache (1.2.0)
-    debugger-ruby_core_source (1.3.8)
-    deep-cover (1.1.0)
-      deep-cover-core (= 1.1.0)
-      highline
-      thor (>= 0.20.3)
-      with_progress
-    deep-cover-core (1.1.0)
-      backports (>= 3.11.0)
-      binding_of_caller
-      parser (>= 2.5)
-      pry
-      term-ansicolor
-      terminal-table
     deprecated (2.0.1)
-    diff-lcs (1.4.4)
-    docile (1.3.4)
+    diff-lcs (1.5.0)
+    digest (3.1.0)
+    docile (1.4.0)
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
     flexmock (1.3.3)
     gyoku (1.3.1)
       builder (>= 2.1.2)
     hashdiff (1.0.1)
-    highline (2.0.3)
     hpricot (0.8.6)
-    http-cookie (1.0.3)
+    http-cookie (1.0.4)
       domain_name (~> 0.5)
-    httpi (2.4.5)
+    httpi (2.5.0)
       rack
       socksify
-    i18n (1.8.7)
+    i18n (1.8.11)
       concurrent-ruby (~> 1.0)
-    json (2.5.1)
+    io-wait (0.2.1)
+    json (2.6.1)
     mail (2.7.1)
       mini_mime (>= 0.1.1)
-    mechanize (2.7.7)
-      domain_name (~> 0.5, >= 0.5.1)
-      http-cookie (~> 1.0)
-      mime-types (>= 1.17.2)
-      net-http-digest_auth (~> 1.1, >= 1.1.1)
-      net-http-persistent (>= 2.5.2)
-      nokogiri (~> 1.6)
-      ntlm-http (~> 0.1, >= 0.1.1)
+    mechanize (2.8.4)
+      addressable (~> 2.8)
+      domain_name (~> 0.5, >= 0.5.20190701)
+      http-cookie (~> 1.0, >= 1.0.3)
+      mime-types (~> 3.0)
+      net-http-digest_auth (~> 1.4, >= 1.4.1)
+      net-http-persistent (>= 2.5.2, < 5.0.dev)
+      nokogiri (~> 1.11, >= 1.11.2)
+      rubyntlm (~> 0.6, >= 0.6.3)
       webrick (~> 1.7)
-      webrobots (>= 0.0.9, < 0.2)
-    method_source (0.8.2)
-    mime-types (3.3.1)
+      webrobots (~> 0.1.2)
+    mime-types (3.4.1)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2020.1104)
+    mime-types-data (3.2022.0105)
     mimemagic (0.4.3)
       nokogiri (~> 1)
       rake
-    mini_mime (1.0.2)
-    mini_portile2 (2.8.0)
-    minitest (5.14.3)
+    mini_mime (1.1.2)
+    mini_portile2 (2.7.1)
+    minitest (5.15.0)
     net-http-digest_auth (1.4.1)
     net-http-persistent (4.0.1)
       connection_pool (~> 2.2)
-    nokogiri (1.13.3)
-      mini_portile2 (~> 2.8.0)
+    net-imap (0.2.3)
+      digest
+      net-protocol
+      strscan
+    net-pop (0.1.1)
+      digest
+      net-protocol
+      timeout
+    net-protocol (0.1.2)
+      io-wait
+      timeout
+    net-smtp (0.3.1)
+      digest
+      net-protocol
+      timeout
+    nokogiri (1.13.1)
+      mini_portile2 (~> 2.7.0)
       racc (~> 1.4)
     nori (2.6.0)
-    ntlm-http (0.1.1)
-    odba (1.1.6)
-      ydbd-pg (>= 0.5.6)
-      ydbi (>= 0.5.6)
-    parser (3.0.0.0)
-      ast (~> 2.4.1)
+    odba (1.1.8)
     pg (1.2.3)
-    pry (0.10.4)
-      coderay (~> 1.1.0)
-      method_source (~> 0.8.1)
-      slop (~> 3.4)
-    pry-byebug (3.8.0)
-      byebug (~> 11.0)
-      pry (~> 0.10)
-    pry-debugger (0.2.3)
-      debugger (~> 1.3)
-      pry (>= 0.9.10, < 0.11.0)
+    psych (3.3.2)
     public_suffix (4.0.6)
     racc (1.6.0)
     rack (2.2.3)
-    rake (13.0.3)
+    rake (13.0.6)
     rclconf (1.0.0)
     rexml (3.2.5)
     rspec (3.10.0)
@@ -121,15 +96,15 @@ GEM
       rspec-mocks (~> 3.10.0)
     rspec-core (3.10.1)
       rspec-support (~> 3.10.0)
-    rspec-expectations (3.10.1)
+    rspec-expectations (3.10.2)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.10.0)
-    rspec-mocks (3.10.1)
+    rspec-mocks (3.10.2)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.10.0)
-    rspec-support (3.10.1)
+    rspec-support (3.10.3)
     ruby-ole (1.2.12.2)
-    ruby-progressbar (1.11.0)
+    rubyntlm (0.6.3)
     savon (2.12.1)
       akami (~> 1.2)
       builder (>= 2.1.2)
@@ -149,61 +124,51 @@ GEM
       simplecov-html (~> 0.11)
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.12.3)
-    simplecov_json_formatter (0.1.2)
-    slop (3.6.0)
+    simplecov_json_formatter (0.1.3)
     socksify (1.7.1)
-    spreadsheet (1.2.6)
-      ruby-ole (>= 1.0)
-    sync (0.5.0)
-    term-ansicolor (1.7.1)
-      tins (~> 1.0)
-    terminal-table (2.0.0)
-      unicode-display_width (~> 1.1, >= 1.1.1)
-    thor (1.0.1)
-    tins (1.28.0)
-      sync
+    spreadsheet (1.3.0)
+      ruby-ole
+    strscan (3.0.1)
+    timeout (0.2.0)
     travis-lint (2.0.0)
       json
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
     unf (0.1.4)
       unf_ext
-    unf_ext (0.0.7.7)
-    unicode-display_width (1.7.0)
+    unf_ext (0.0.8)
     wasabi (3.6.1)
       addressable
       httpi (~> 2.0)
       nokogiri (>= 1.4.2)
-    webmock (3.11.0)
-      addressable (>= 2.3.6)
+    webmock (3.14.0)
+      addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
     webrick (1.7.0)
     webrobots (0.1.2)
-    with_progress (1.0.1)
-      ruby-progressbar (~> 1.4)
-    ydbd-pg (0.5.6)
+    ydbd-pg (0.5.8)
       pg
-      ydbi (= 0.5.6)
-    ydbi (0.5.6)
+      ydbi (= 0.5.8)
+    ydbi (0.5.8)
       deprecated (= 2.0.1)
-    zeitwerk (2.4.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   activesupport
-  deep-cover
   deprecated (< 3.0.0)
   flexmock (< 2.0.0)
   json (< 3.0.0)
   mail
   mechanize
+  net-imap
+  net-pop
+  net-smtp
   odba (>= 1.1.6)
   pg (>= 1.0.0)
-  pry-byebug
-  pry-debugger
+  psych (< 4.0.0)
   rack (< 3.0.0)
   rake
   rclconf
@@ -216,6 +181,8 @@ DEPENDENCIES
   travis-lint
   webmock
   webrick
+  ydbd-pg
+  ydbi
 
 BUNDLED WITH
-   2.2.4
+   2.3.4

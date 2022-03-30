@@ -1,5 +1,5 @@
 begin
-  require 'pry'
+#  require 'pry'
 rescue LoadError
   # ignore error for Travis-CI
 end

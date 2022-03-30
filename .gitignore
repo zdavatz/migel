@@ -1,4 +1,6 @@
 .ruby-version
+!*.xls
+#spec/data/*latest*
 data/
 *.csv
 *.patch

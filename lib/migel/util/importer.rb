@@ -100,7 +100,6 @@ class Importer
     }
     expected.each do |key, value|
       next if row[key].eql?(value)
-      require 'pry'; binding.pry
       raise "Unexpected name #{row[key]} for key #{key.to_s} #{value}"
     end
   end
@@ -129,16 +128,23 @@ class Importer
       check_headers(sheet.rows.first) if language.eql?('de')
       csv_name = File.join(@data_dir, "migel_#{language}.csv")
       idx = 0
-      CSV.open(csv_name, 'w') do |writer|
+      CSV.open(csv_name, 'w', :force_quotes => true) do |writer|
         sheet.rows.each do |row|
           next unless row.first
           # fix conversion to date
+          begin
+            if date = Date.parse(row[Revision_Valid_since].to_s, '%Y.%m%.%d')
+              row[Revision_Valid_since] = date.strftime('%d.%m.%Y')
+            end
+          rescue => error
+            puts "Error in file #{csv_name} in line #{idx}: #{error}"
+          end if idx > 0
           writer << row
           idx += 1
           puts "#{Time.now}: update_all #{language} #{@xls_file} at row #{idx} #{row.at(Positions_Nummer)}" if idx % 500 == 0
         end
       end
-      update(csv_name, language) #   unless defined?(RSpec)
+      update(csv_name, language)
     }
     FileUtils.mv(@xls_file, latest, :verbose => true)
   end
@@ -197,7 +203,6 @@ class Importer
       group.save
       group
     rescue => error
-        require 'pry'; binding.pry
         0
       end
   end
@@ -252,7 +257,6 @@ class Importer
       mi
     end
   rescue => error
-    require 'pry'; binding.pry
     0
   end
     migelid.subgroup = subgroup
