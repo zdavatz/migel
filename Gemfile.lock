@@ -28,7 +28,7 @@ GEM
       builder (>= 2.1.2)
     hashdiff (1.0.1)
     hpricot (0.8.6)
-    http-cookie (1.0.4)
+    http-cookie (1.0.5)
       domain_name (~> 0.5)
     httpi (2.5.0)
       rack
@@ -39,7 +39,7 @@ GEM
     json (2.6.1)
     mail (2.7.1)
       mini_mime (>= 0.1.1)
-    mechanize (2.8.4)
+    mechanize (2.8.5)
       addressable (~> 2.8)
       domain_name (~> 0.5, >= 0.5.20190701)
       http-cookie (~> 1.0, >= 1.0.3)
@@ -56,18 +56,8 @@ GEM
     mimemagic (0.4.3)
       nokogiri (~> 1)
       rake
-<<<<<<< HEAD
-    mini_mime (1.0.2)
-    mini_portile2 (2.8.0)
-    minitest (5.14.3)
-    net-http-digest_auth (1.4.1)
-    net-http-persistent (4.0.1)
-      connection_pool (~> 2.2)
-    nokogiri (1.13.3)
-      mini_portile2 (~> 2.8.0)
-=======
     mini_mime (1.1.2)
-    mini_portile2 (2.7.1)
+    mini_portile2 (2.8.0)
     minitest (5.15.0)
     net-http-digest_auth (1.4.1)
     net-http-persistent (4.0.1)
@@ -87,17 +77,16 @@ GEM
       digest
       net-protocol
       timeout
-    nokogiri (1.13.1)
-      mini_portile2 (~> 2.7.0)
->>>>>>> 9dc0eb04935782f567c849cb31201deff56aabe8
+    nokogiri (1.13.10)
+      mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     nori (2.6.0)
     odba (1.1.8)
     pg (1.2.3)
     psych (3.3.2)
-    public_suffix (4.0.6)
-    racc (1.6.0)
-    rack (2.2.3)
+    public_suffix (4.0.7)
+    racc (1.6.1)
+    rack (2.2.3.1)
     rake (13.0.6)
     rclconf (1.0.0)
     rexml (3.2.5)
@@ -147,7 +136,7 @@ GEM
       concurrent-ruby (~> 1.0)
     unf (0.1.4)
       unf_ext
-    unf_ext (0.0.8)
+    unf_ext (0.0.8.2)
     wasabi (3.6.1)
       addressable
       httpi (~> 2.0)
@@ -158,10 +147,10 @@ GEM
       hashdiff (>= 0.4.0, < 2.0.0)
     webrick (1.7.0)
     webrobots (0.1.2)
-    ydbd-pg (0.5.8)
+    ydbd-pg (0.5.9)
       pg
-      ydbi (= 0.5.8)
-    ydbi (0.5.8)
+      ydbi (= 0.5.9)
+    ydbi (0.5.9)
       deprecated (= 2.0.1)
 
 PLATFORMS
