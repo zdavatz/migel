@@ -554,7 +554,7 @@ end # describe
     def setup_importer
       @importer = Migel::Util::Importer.new
       @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL-2022.01.21.xls'))
-      expect(File.exists?(@test_file)).to be true
+      expect(File.exist?(@test_file)).to be true
 #      expect(File.size(@test_file)).to be < 75000
       @server = Migel::Util::Server.new
       allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
