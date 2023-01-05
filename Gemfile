@@ -8,7 +8,7 @@ gem 'ydbd-pg'
 gem 'webrick'
 gem 'odba', '>= 1.1.6'
 gem 'rclconf'
-gem 'mail'
+gem 'mail', '< 2.8.0' # or you get an error about mail/indifferent_hash
 gem 'savon'#, '0.9.7'
 gem 'mechanize'
 gem 'spreadsheet'
