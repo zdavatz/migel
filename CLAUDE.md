@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-migel is a Ruby gem for managing MiGeL (Mittel- und Geräteliste) data — the Swiss medical devices and equipment catalog — used by ch.oddb.org. It imports device data from XLS/CSV sources and external services (SwissIndex, RefData), stores it via ODBA/PostgreSQL, and exposes it through a DRb server.
+migel is a Ruby gem for managing MiGeL (Mittel- und Geräteliste) data — the Swiss medical devices and equipment catalog — used by ch.oddb.org. It imports device data from XLS/CSV sources and GS1 Switzerland, stores it via ODBA/PostgreSQL, and exposes it through a DRb server.
 
 **Ruby version:** 3.3.0 | **License:** GPLv2
 
@@ -28,15 +28,17 @@ Hierarchical catalog structure: **Group** → **Subgroup** → **Migelid** → *
 - **Group** (code 01-99): top-level device category
 - **Subgroup** (code 01-99): subcategory within a group
 - **Migelid** (code 001-999): catalog entry with pricing/limitation info; `migel_code` = concatenation of group+subgroup+migelid codes
-- **Product**: physical product identified by pharmacode/EAN
+- **Product**: physical product identified by GTIN/EAN code
 
 All models inherit from `ModelSuper` (lib/migel/model_super.rb), which provides a custom DSL for associations (`has_many`, `belongs_to`, `on_delete`, `on_save`) and multilingual support (German, French, Italian).
 
 ### Key Components
 
-- **lib/migel/util/importer.rb** — Main import logic. `update_all` downloads MiGeL.xls, processes groups/subgroups/migelids, queries SwissIndex for products, and exports to CSV.
+- **lib/migel/util/importer.rb** — Main import logic:
+  - `update_all` downloads MiGeL.xls, processes groups/subgroups/migelids
+  - `update_products_from_gs1` downloads GS1 CSV from `id.gs1.ch` and creates/updates products
 - **lib/migel/util/server.rb** — DRb server implementation (default: `druby://127.0.0.1:33000`)
-- **lib/migel/plugin/swissindex.rb** and **lib/migel/ext/swissindex.rb** — SwissIndex/RefData integration for product lookups and EAN/GTIN retrieval
+- **lib/migel/plugin/swissindex.rb** and **lib/migel/ext/swissindex.rb** — Legacy SwissIndex/RefData integration (superseded by GS1 for product data)
 - **lib/migel/config.rb** — Configuration management
 
 ### Entry Points
@@ -49,15 +51,57 @@ All models inherit from `ModelSuper` (lib/migel/model_super.rb), which provides 
 
 Uses ODBA (Object Database Abstraction) backed by PostgreSQL via `ydbi`/`ydbd-pg`. DRb wrappers enable remote object access.
 
+**Note:** ODBA 1.1.8/1.1.9 uses `WITH OIDS` in SQL which is incompatible with PostgreSQL 12+. The installed gem's `lib/odba/storage.rb` must be patched to remove `WITH OIDS` from `CREATE TABLE` statements.
+
 ### Data Flow
 
 1. MiGeL.xls downloaded from `oddb2xml_files` GitHub repo
-2. `Importer.update_all` parses XLS into Group/Subgroup/Migelid objects
-3. For each Migelid, SwissIndex is queried for associated products
-4. RefData provides EAN/GTIN codes
-5. Results exported to `migel_products_{de,fr,it}.csv`
+2. `Importer.update_all` parses XLS into Group/Subgroup/Migelid objects (catalog structure)
+3. `Importer.update_products_from_gs1` downloads GS1 CSV (~189K products) and creates/updates Product records
+4. Products are matched/keyed by GTIN (used as pharmacode). No pharmacode field in GS1 data.
+5. Fulltext index tables rebuilt via `system.init_fulltext_index_tables`
 
-## PostgreSQL Note
+### GS1 CSV Import (Primary Product Data Source)
+
+The GS1 CSV is downloaded from `https://id.gs1.ch/01/07612345000961`. Column mapping (columns after O are ignored):
+
+| CSV Column | Product Field |
+|-----------|--------------|
+| Gtin | ean_code (also used as pharmacode key) |
+| InformationProviderGln | companyean |
+| InformationProviderPartyName | companyname (de/fr/it, same value) |
+| TradeItemDescription_DE/FR/IT | article_name (de/fr/it) |
+| NetContent_Value + MeasurementUnitCode | size (de/fr/it) |
+| LastChangeDateTime | datetime |
+
+The CSV is UTF-8 with BOM; parsed with `encoding: 'bom|utf-8'`.
+
+## Running the Import
+
+```bash
+bundle exec bin/migeld                    # Start DRb server (required)
+bundle exec ruby jobs/update_migel        # Run full import (XLS + GS1 + reindex)
+```
+
+The DRb server must be running on port 33000 for the job to complete (needed for `init_fulltext_index_tables`).
+
+## Related: oddb.org Web Interface
+
+The web frontend lives at `~/.software/oddb.org`. When modifying migel search result views:
+
+- **src/view/migel/items.rb** — Product-level search results (SearchedList). Column layout defined in `migel_item_list_components`.
+- **src/view/migel/result.rb** — MiGeL catalog result views (ResultList with group/subgroup headers).
+- **src/custom/lookandfeelbase.rb** — Component layout definitions (`migel_list_components`, `migel_item_list_components`).
+- **src/view/additional_information.rb** — Google search, mail, twitter, facebook link helpers. Uses DRb objects from migel; must handle nil values and frozen strings (use `.to_s.dup.force_encoding("utf-8")`).
+
+Pagination links for migel search must include `zone: :migel` in the URL args, otherwise the request falls through to drug search and redirects to home.
+
+## PostgreSQL Setup
+
+```bash
+psql -U postgres -c "CREATE ROLE migel WITH LOGIN;"
+psql -U postgres -c "CREATE DATABASE migel OWNER migel;"
+```
 
 Non-standard postgres paths require:
 ```bash
