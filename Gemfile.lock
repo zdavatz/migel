@@ -24,6 +24,7 @@ GEM
     crack (0.4.6)
       bigdecimal
       rexml
+    csv (3.3.5)
     date (3.3.4)
     deprecated (2.0.1)
     diff-lcs (1.5.0)
@@ -86,6 +87,7 @@ GEM
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     nori (2.6.0)
+    observer (0.1.2)
     odba (1.1.8)
     pg (1.5.4)
     psych (3.3.4)
@@ -111,7 +113,11 @@ GEM
     rspec-support (3.12.1)
     ruby-ole (1.2.12.2)
     ruby2_keywords (0.0.5)
+    rubyXL (3.4.35)
+      nokogiri (>= 1.10.8)
+      rubyzip (>= 3.2.2)
     rubyntlm (0.6.3)
+    rubyzip (3.2.2)
     savon (2.14.0)
       akami (~> 1.2)
       builder (>= 2.1.2)
@@ -164,6 +170,7 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  csv
   deprecated (< 3.0.0)
   flexmock (< 2.0.0)
   json (< 3.0.0)
@@ -172,6 +179,7 @@ DEPENDENCIES
   net-imap
   net-pop
   net-smtp
+  observer
   odba (>= 1.1.6)
   pg (>= 1.0.0)
   psych (< 4.0.0)
@@ -180,6 +188,7 @@ DEPENDENCIES
   rclconf
   rspec
   rspec-mocks
+  rubyXL
   savon
   sbsm (>= 1.5.8)
   simplecov

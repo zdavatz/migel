@@ -6,12 +6,15 @@ gem 'net-pop', require: false
 gem 'ydbi'
 gem 'ydbd-pg'
 gem 'webrick'
+gem 'csv'
+gem 'observer'
 gem 'odba', '>= 1.1.6'
 gem 'rclconf'
 gem 'mail', '< 2.8.0' # or you get an error about mail/indifferent_hash
 gem 'savon'#, '0.9.7'
 gem 'mechanize'
 gem 'spreadsheet'
+gem 'rubyXL'
 gem 'deprecated', '< 3.0.0'
 gem 'sbsm', '>=1.5.8'
 gem 'pg', '>= 1.0.0' # for running bin/migeld
