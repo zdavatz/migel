@@ -5,10 +5,13 @@
 
 require 'csv'
 require 'fileutils'
+require 'set'
 require 'zlib'
 require 'migel/util/mail'
 require 'migel/plugin/swissindex'
 require 'spreadsheet'
+require 'rubyXL'
+require 'rubyXL/convenience_methods'
 require 'open-uri'
 require 'migel/util/server'
 
@@ -46,12 +49,14 @@ class Importer
 	attr_reader :data_dir
 	attr_reader :xls_file
 	OriginalXLS = 'https://github.com/zdavatz/oddb2xml_files/raw/master/MiGeL.xls'
+	BAG_XLSX_URL = 'https://www.bag.admin.ch/dam/de/sd-web/77j5rwUTzbkq/Mittel-%20und%20Gegenst%C3%A4ndeliste%20per%2001.01.2026%20in%20Excel-Format.xlsx'
 	GS1_CSV_URL = 'https://id.gs1.ch/01/07612345000961'
   SALE_TYPES = {
     '1' => :purchase,
     '2' => :rent,
     '3' => :both,
   }
+  # Old MiGeL.xls column indices (kept for backward compatibility)
   Produktegruppe_Nr = 0
   Limitation_Produktegruppe = 1
   Produktegruppe = 2
@@ -67,6 +72,24 @@ class Importer
   Einheit = 19
   Max_Price = 20 #      Höchstvergütungsbetrag =
   Revision_Valid_since = 22 # Revision Gültig ab
+
+  # BAG XLSX column indices
+  BAG_COL_PRODUKTEGRUPPE = 0
+  BAG_COL_KATEGORIE = 1
+  BAG_COL_POSITIONS_NR = 7
+  BAG_COL_LIMITATION_FLAG = 8
+  BAG_COL_BEZEICHNUNG = 9
+  BAG_COL_LIMITATION_TEXT = 10
+  BAG_COL_MENGE_EINHEIT = 11
+  BAG_COL_HVB_SELBST = 12
+  BAG_COL_HVB_PFLEGE = 13
+  BAG_COL_GUELTIG_AB = 14
+
+  BAG_LANGUAGE_SHEETS = {
+    'de' => 'MiGeL D',
+    'fr' => 'MiGeL F',
+    'it' => 'MiGeL I',
+  }
 
   def initialize
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
@@ -106,48 +129,216 @@ class Importer
   end
 
   def update_all
-    puts "#{Time.now}: update_all using #{@xls_file}"
-    base = File.basename(@xls_file, '.xls')
-    xls = File.open(@xls_file, 'wb+')
-    URI.open(OriginalXLS) {|f| xls.write(f.read ) }
-    xls.close
-    actContent = File.read(@xls_file)
-
-    latest = File.join(@data_dir, base + '-latest.xls')
-    target = File.join(@data_dir, "#{base}-#{Time.now.strftime('%Y.%m.%d')}.xls")
-    if !File.exist?(target) || File.read(target) != actContent
-      FileUtils.cp(@xls_file, target, :verbose => true, :preserve => true)
+    xlsx_file = File.join(@data_dir, 'MiGeL_BAG.xlsx')
+    puts "#{Time.now}: update_all downloading BAG XLSX from #{BAG_XLSX_URL}"
+    File.open(xlsx_file, 'wb+') do |f|
+      URI.open(BAG_XLSX_URL) { |remote| f.write(remote.read) }
     end
-    if File.exist?(latest) && File.read(latest) == actContent
+
+    latest = File.join(@data_dir, 'MiGeL_BAG-latest.xlsx')
+    target = File.join(@data_dir, "MiGeL_BAG-#{Time.now.strftime('%Y.%m.%d')}.xlsx")
+    act_content = File.read(xlsx_file)
+    if !File.exist?(target) || File.read(target) != act_content
+      FileUtils.cp(xlsx_file, target, :verbose => true, :preserve => true)
+    end
+    if File.exist?(latest) && File.read(latest) == act_content
+      puts "#{Time.now}: update_all BAG XLSX unchanged, skipping"
       return
     end
-    puts "#{Time.now}: update_all #{@xls_file} taken from #{OriginalXLS}"
-    book = Spreadsheet.open @xls_file
-    LANGUAGE_NAMES.each{
-        |language, name|
-      sheet = book.worksheet(name)
-      check_headers(sheet.rows.first) if language.eql?('de')
-      csv_name = File.join(@data_dir, "migel_#{language}.csv")
-      idx = 0
-      CSV.open(csv_name, 'w', :force_quotes => true) do |writer|
-        sheet.rows.each do |row|
-          next unless row.first
-          # fix conversion to date
-          begin
-            if date = Date.parse(row[Revision_Valid_since].to_s, '%Y.%m%.%d')
-              row[Revision_Valid_since] = date.strftime('%d.%m.%Y')
-            end
-          rescue => error
-            puts "Error in file #{csv_name} in line #{idx}: #{error}"
-          end if idx > 0
-          writer << row
-          idx += 1
-          puts "#{Time.now}: update_all #{language} #{@xls_file} at row #{idx} #{row.at(Positions_Nummer)}" if idx % 500 == 0
-        end
+
+    puts "#{Time.now}: update_all parsing BAG XLSX #{xlsx_file}"
+    book = RubyXL::Parser.parse(xlsx_file)
+
+    BAG_LANGUAGE_SHEETS.each do |language, sheet_name|
+      sheet = book[sheet_name]
+      unless sheet
+        puts "#{Time.now}: WARNING: sheet '#{sheet_name}' not found, skipping #{language}"
+        next
       end
-      update(csv_name, language)
+      puts "#{Time.now}: update_all processing sheet '#{sheet_name}' (#{language}), #{sheet.count} rows"
+      update_from_bag_sheet(sheet, language)
+    end
+
+    FileUtils.mv(xlsx_file, latest, :verbose => true)
+    puts "#{Time.now}: update_all done"
+  end
+
+  def update_from_bag_sheet(sheet, language)
+    current_group = nil
+    current_subgroup = nil
+    row_count = 0
+
+    (1..sheet.count - 1).each do |r|
+      next unless sheet[r]
+      cells = sheet[r].cells
+      produktegruppe = cells[BAG_COL_PRODUKTEGRUPPE]&.value.to_s.strip
+      kategorie = cells[BAG_COL_KATEGORIE]&.value.to_s.strip
+      pos_nr = cells[BAG_COL_POSITIONS_NR]&.value.to_s.strip
+      bezeichnung = cells[BAG_COL_BEZEICHNUNG]&.value.to_s.gsub(/[\v\r]/, "\n").strip
+      limitation_text = cells[BAG_COL_LIMITATION_TEXT]&.value.to_s.gsub(/[\v\r]/, "\n").strip
+      limitation_flag = cells[BAG_COL_LIMITATION_FLAG]&.value.to_s.strip
+      menge_einheit = cells[BAG_COL_MENGE_EINHEIT]&.value.to_s.strip
+      hvb_selbst = cells[BAG_COL_HVB_SELBST]&.value
+      hvb_pflege = cells[BAG_COL_HVB_PFLEGE]&.value
+      gueltig_ab = cells[BAG_COL_GUELTIG_AB]&.value
+
+      if pos_nr.length > 0
+        # Position row — create/update migelid
+        current_group, current_subgroup = update_bag_migelid(
+          pos_nr, bezeichnung, limitation_text, limitation_flag,
+          menge_einheit, hvb_selbst, hvb_pflege, gueltig_ab,
+          current_group, current_subgroup, language
+        )
+        row_count += 1
+      elsif kategorie.length > 0 && kategorie != " "
+        # Subgroup header row
+        current_subgroup = update_bag_subgroup(kategorie, bezeichnung, limitation_text, current_group, language)
+      elsif produktegruppe.length > 0 && produktegruppe != " "
+        # Group header row
+        current_group = update_bag_group(produktegruppe, bezeichnung, limitation_text, language)
+        current_subgroup = nil
+      end
+
+      puts "#{Time.now}: update_all #{language} processed #{row_count} positions" if row_count > 0 && row_count % 200 == 0
+    end
+    puts "#{Time.now}: update_all #{language} done, #{row_count} positions processed"
+  end
+
+  def update_bag_group(code, bezeichnung, limitation_text_str, language)
+    # code is e.g. "01"
+    groupcd = code.strip
+    group = Migel::Model::Group.find_by_code(groupcd) || Migel::Model::Group.new(groupcd)
+    group.name.send(language.to_s + '=', bezeichnung)
+    if limitation_text_str && !limitation_text_str.empty?
+      text = limitation_text_str.tr("\v", " ").strip
+      group.update_limitation_text(text, language) unless text.empty?
+    end
+    group.save
+    migel_code_list.delete(group.migel_code)
+    group
+  rescue => error
+    puts "#{Time.now}: ERROR update_bag_group #{code}: #{error}"
+    nil
+  end
+
+  def update_bag_subgroup(code, bezeichnung, limitation_text_str, group, language)
+    # code is e.g. "01.01" — extract the subgroup part after the dot
+    parts = code.split('.')
+    subgroupcd = parts.last
+    unless group
+      # Try to find group from the code prefix
+      groupcd = parts.first
+      group = Migel::Model::Group.find_by_code(groupcd)
+    end
+    return nil unless group
+
+    subgroup = group.subgroups.find { |sg| sg.code == subgroupcd } || begin
+      sg = Migel::Model::Subgroup.new(subgroupcd)
+      group.subgroups.push sg
+      group.save
+      sg
+    end
+    subgroup.group = group
+    subgroup.name.send(language.to_s + '=', bezeichnung)
+    if limitation_text_str && !limitation_text_str.empty?
+      subgroup.update_limitation_text(limitation_text_str, language)
+    end
+    subgroup.save
+    migel_code_list.delete(subgroup.migel_code)
+    subgroup
+  rescue => error
+    puts "#{Time.now}: ERROR update_bag_subgroup #{code}: #{error}"
+    nil
+  end
+
+  def update_bag_migelid(pos_nr, bezeichnung, limitation_text_str, limitation_flag,
+                          menge_einheit, hvb_selbst, hvb_pflege, gueltig_ab,
+                          current_group, current_subgroup, language)
+    # pos_nr is e.g. "01.01.01.00.1"
+    parts = pos_nr.split('.')
+    groupcd = parts[0]
+    subgroupcd = parts[1]
+    migelidcd = parts[2..4].join('.')  # e.g. "01.00.1"
+
+    # Ensure we have the right group/subgroup
+    if current_group.nil? || current_group.code != groupcd
+      current_group = Migel::Model::Group.find_by_code(groupcd)
+    end
+    return [current_group, current_subgroup] unless current_group
+
+    if current_subgroup.nil? || current_subgroup.code != subgroupcd
+      current_subgroup = current_group.subgroups.find { |sg| sg.code == subgroupcd }
+    end
+    return [current_group, current_subgroup] unless current_subgroup
+
+    migelid = current_subgroup.migelids.find { |mi| mi.respond_to?(:code) && mi.code == migelidcd } || begin
+      mi = Migel::Model::Migelid.new(migelidcd)
+      current_subgroup.migelids.push mi
+      current_subgroup.save
+      mi
+    end
+    migelid.subgroup = current_subgroup
+
+    # Parse name and migelid_text from Bezeichnung
+    text = bezeichnung.gsub(/[ \t]+/u, " ")
+    name = text.slice!(/^[^\n]+/u).to_s.strip
+    migelid_text = text.strip
+
+    # Price: use HVB Selbstanwendung (col 12), fall back to HVB Pflege (col 13)
+    price_val = hvb_selbst || hvb_pflege
+    price = if price_val
+              ((price_val.to_s[/\d[\d.]*/u].to_f) * 100).round
+            else
+              0
+            end
+
+    # Parse qty and unit from combined "Menge / Einheit" field
+    qty = 0
+    unit = ''
+    if menge_einheit && !menge_einheit.empty?
+      if menge_einheit =~ /^(\d+)\s*(.*)/
+        qty = $1.to_i
+        unit = $2.strip
+      else
+        unit = menge_einheit
+      end
+    end
+
+    # Parse date
+    date = nil
+    if gueltig_ab
+      begin
+        if gueltig_ab.is_a?(DateTime) || gueltig_ab.is_a?(Date)
+          date = gueltig_ab.to_date
+        else
+          date = Date.parse(gueltig_ab.to_s)
+        end
+      rescue => error
+        puts "#{Time.now}: WARNING: could not parse date '#{gueltig_ab}': #{error}"
+      end
+    end
+
+    limitation = (limitation_flag == 'L')
+
+    migelid.limitation_text(true)
+    multilingual_data = {
+      :name            => name,
+      :migelid_text    => migelid_text,
+      :limitation_text => limitation_text_str || '',
+      :unit            => unit,
     }
-    FileUtils.mv(@xls_file, latest, :verbose => true)
+    migelid.update_multilingual(multilingual_data, language)
+    migelid.price = price
+    migelid.date  = date
+    migelid.limitation = limitation
+    migelid.qty = qty if qty > 0
+    migelid.save
+
+    migel_code_list.delete(migelid.migel_code)
+    [current_group, current_subgroup]
+  rescue => error
+    puts "#{Time.now}: ERROR update_bag_migelid #{pos_nr}: #{error}"
+    [current_group, current_subgroup]
   end
   def update_products_from_gs1
     gs1_file = File.join(@data_dir, 'gs1_migel.csv')
@@ -206,6 +397,123 @@ class Importer
       puts "#{Time.now}: update_products_from_gs1 #{row_count} rows processed (#{created_count} created, #{updated_count} updated)" if row_count % 10000 == 0
     end
     puts "#{Time.now}: update_products_from_gs1 done. #{row_count} rows: #{created_count} created, #{updated_count} updated"
+
+    # Text-match products to migelids
+    match_products_to_migelids
+  end
+
+  STOPWORDS = %w[
+    und der die das den dem des ein eine einer eines einem für mit von auf aus
+    bei nach über unter zum zur vor bis durch oder als auch wie noch nicht ist
+    und et le la les des du des un une pour avec par sur dans plus que qui
+    per con del della dei degli delle dal dalla dai dalle sul sulla sui sulle
+    the and for with from
+  ].to_set.freeze
+
+  def tokenize(text)
+    return [] unless text
+    text.downcase.gsub(/[^a-zäöüéèàêâîôûëïùçñ0-9\s-]/i, ' ')
+        .split(/\s+/)
+        .reject { |w| w.length < 3 || STOPWORDS.include?(w) }
+        .uniq
+  end
+
+  def match_products_to_migelids
+    puts "#{Time.now}: match_products_to_migelids building migelid keyword index..."
+
+    # Build keyword index: migelid -> [keywords from name + migelid_text]
+    migelid_index = {}  # migel_code -> { migelid: obj, keywords: [...] }
+    codes = migel_code_list.dup
+    codes.each do |migel_code|
+      next unless migel_code.to_s.length > 5  # only migelids, not groups/subgroups
+      migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
+      next unless migelid
+
+      # Gather text from all languages for matching
+      texts = []
+      %w[de fr it].each do |lang|
+        texts << migelid.name.send(lang).to_s
+        texts << migelid.migelid_text.send(lang).to_s if migelid.respond_to?(:migelid_text) && migelid.migelid_text
+        # Also include group and subgroup names for context
+        if migelid.respond_to?(:subgroup) && migelid.subgroup
+          texts << migelid.subgroup.name.send(lang).to_s
+          if migelid.subgroup.respond_to?(:group) && migelid.subgroup.group
+            texts << migelid.subgroup.group.name.send(lang).to_s
+          end
+        end
+      end
+
+      keywords = texts.flat_map { |t| tokenize(t) }.uniq
+      migelid_index[migel_code] = { migelid: migelid, keywords: keywords } unless keywords.empty?
+    end
+
+    puts "#{Time.now}: match_products_to_migelids indexed #{migelid_index.size} migelids"
+
+    # Now iterate all products and try to match
+    matched = 0
+    unmatched = 0
+    already_linked = 0
+    product_count = 0
+
+    # Get all products via the pharmacode index
+    all_pharmacodes = begin
+      ODBA.cache.index_keys('migel_model_product_pharmacode')
+    rescue => e
+      puts "#{Time.now}: WARNING could not get pharmacode list: #{e}"
+      []
+    end
+
+    puts "#{Time.now}: match_products_to_migelids matching #{all_pharmacodes.size} products..."
+
+    all_pharmacodes.each do |pharmacode|
+      product = Migel::Model::Product.find_by_pharmacode(pharmacode)
+      product = product.first if product.is_a?(Array)
+      next unless product
+      product_count += 1
+
+      # Skip if already linked to a migelid
+      if product.respond_to?(:migelid) && product.migelid
+        already_linked += 1
+        next
+      end
+
+      # Tokenize product description
+      product_texts = []
+      %w[de fr it].each do |lang|
+        product_texts << product.article_name.send(lang).to_s if product.article_name
+      end
+      product_keywords = product_texts.flat_map { |t| tokenize(t) }.uniq
+      next if product_keywords.empty?
+
+      # Score against all migelids
+      best_score = 0
+      best_code = nil
+      migelid_index.each do |migel_code, data|
+        overlap = (product_keywords & data[:keywords]).size
+        if overlap > best_score
+          best_score = overlap
+          best_code = migel_code
+        end
+      end
+
+      if best_score >= 2 && best_code
+        migelid_data = migelid_index[best_code]
+        migelid = migelid_data[:migelid]
+        migelid.products.push(product) unless migelid.products.any? { |p| p.pharmacode == product.pharmacode }
+        product.migelid = migelid
+        product.save
+        migelid.save
+        matched += 1
+      else
+        unmatched += 1
+      end
+
+      if product_count % 10000 == 0
+        puts "#{Time.now}: match_products_to_migelids #{product_count} products checked (#{matched} matched, #{unmatched} unmatched, #{already_linked} already linked)"
+      end
+    end
+
+    puts "#{Time.now}: match_products_to_migelids done. #{product_count} products: #{matched} matched, #{unmatched} unmatched, #{already_linked} already linked"
   end
 
   # for import groups, subgroups, migelids
