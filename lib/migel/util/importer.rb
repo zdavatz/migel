@@ -46,6 +46,7 @@ class Importer
 	attr_reader :data_dir
 	attr_reader :xls_file
 	OriginalXLS = 'https://github.com/zdavatz/oddb2xml_files/raw/master/MiGeL.xls'
+	GS1_CSV_URL = 'https://id.gs1.ch/01/07612345000961'
   SALE_TYPES = {
     '1' => :purchase,
     '2' => :rent,
@@ -148,6 +149,65 @@ class Importer
     }
     FileUtils.mv(@xls_file, latest, :verbose => true)
   end
+  def update_products_from_gs1
+    gs1_file = File.join(@data_dir, 'gs1_migel.csv')
+    puts "#{Time.now}: update_products_from_gs1 downloading #{GS1_CSV_URL}"
+    File.open(gs1_file, 'wb+') do |f|
+      URI.open(GS1_CSV_URL) { |remote| f.write(remote.read) }
+    end
+    puts "#{Time.now}: update_products_from_gs1 parsing #{gs1_file}"
+
+    created_count = 0
+    updated_count = 0
+    row_count = 0
+    CSV.foreach(gs1_file, headers: true, encoding: 'bom|utf-8') do |row|
+      gtin = row['Gtin']
+      next unless gtin && !gtin.empty?
+      row_count += 1
+
+      # Find existing product by EAN or create new one using GTIN as pharmacode
+      product = Migel::Model::Product.find_by_ean_code(gtin)
+      if product.is_a?(Array)
+        product = product.first
+      end
+      if product
+        updated_count += 1
+      else
+        product = Migel::Model::Product.new(gtin)
+        product.ean_code = gtin
+        created_count += 1
+      end
+
+      product.article_name.de = row['TradeItemDescription_DE'] if row['TradeItemDescription_DE']
+      product.article_name.fr = row['TradeItemDescription_FR'] if row['TradeItemDescription_FR']
+      product.article_name.it = row['TradeItemDescription_IT'] if row['TradeItemDescription_IT']
+
+      company = row['InformationProviderPartyName']
+      if company && !company.empty?
+        product.companyname.de = company
+        product.companyname.fr = company
+        product.companyname.it = company
+      end
+
+      product.companyean = row['InformationProviderGln'] if row['InformationProviderGln']
+
+      net_value = row['NetContent_Value']
+      net_unit = row['NetContent_MeasurementUnitCode']
+      if net_value && !net_value.empty?
+        size_str = [net_value, net_unit].compact.reject(&:empty?).join(' ')
+        product.size.de = size_str
+        product.size.fr = size_str
+        product.size.it = size_str
+      end
+
+      product.datetime = row['LastChangeDateTime'] if row['LastChangeDateTime']
+
+      product.save
+      puts "#{Time.now}: update_products_from_gs1 #{row_count} rows processed (#{created_count} created, #{updated_count} updated)" if row_count % 10000 == 0
+    end
+    puts "#{Time.now}: update_products_from_gs1 done. #{row_count} rows: #{created_count} created, #{updated_count} updated"
+  end
+
   # for import groups, subgroups, migelids
   def update(path, language)
     puts "#{Time.now}: update #{path} #{language}"

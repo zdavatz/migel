@@ -10,7 +10,9 @@ require 'migel/util/importer'
 module Migel
   module Util
     Job.run do |system|
-      Importer.new.update_all
+      importer = Importer.new
+      importer.update_all
+      importer.update_products_from_gs1
       system.init_fulltext_index_tables
     end
   end
