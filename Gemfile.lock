@@ -67,7 +67,7 @@ GEM
       nokogiri (~> 1)
       rake
     mini_mime (1.1.5)
-    mini_portile2 (2.8.6)
+    mini_portile2 (2.8.9)
     minitest (5.21.2)
     mutex_m (0.2.0)
     net-http-digest_auth (1.4.1)
@@ -83,7 +83,7 @@ GEM
     net-smtp (0.4.0.1)
       net-protocol
     nkf (0.2.0)
-    nokogiri (1.16.5)
+    nokogiri (1.19.1)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     nori (2.6.0)
@@ -92,7 +92,7 @@ GEM
     pg (1.5.4)
     psych (3.3.4)
     public_suffix (5.0.4)
-    racc (1.7.3)
+    racc (1.8.1)
     rack (2.2.8.1)
     rake (13.1.0)
     rclconf (1.0.0)
