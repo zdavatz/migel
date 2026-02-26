@@ -93,8 +93,10 @@ class Importer
 
   def initialize
     @data_dir = File.expand_path('../../../data/csv', File.dirname(__FILE__))
+    @xlsx_dir = File.expand_path('../../../data/xlsx', File.dirname(__FILE__))
     $stdout.sync = true
     FileUtils.mkdir_p @data_dir
+    FileUtils.mkdir_p @xlsx_dir
     @xls_file = File.join(@data_dir, File.basename(OriginalXLS))
     @start_time = Time.now
   end
@@ -129,14 +131,14 @@ class Importer
   end
 
   def update_all
-    xlsx_file = File.join(@data_dir, 'MiGeL_BAG.xlsx')
+    xlsx_file = File.join(@xlsx_dir, 'MiGeL_BAG.xlsx')
     puts "#{Time.now}: update_all downloading BAG XLSX from #{BAG_XLSX_URL}"
     File.open(xlsx_file, 'wb+') do |f|
       URI.open(BAG_XLSX_URL) { |remote| f.write(remote.read) }
     end
 
-    latest = File.join(@data_dir, 'MiGeL_BAG-latest.xlsx')
-    target = File.join(@data_dir, "MiGeL_BAG-#{Time.now.strftime('%Y.%m.%d')}.xlsx")
+    latest = File.join(@xlsx_dir, 'MiGeL_BAG-latest.xlsx')
+    target = File.join(@xlsx_dir, "MiGeL_BAG-#{Time.now.strftime('%Y.%m.%d')}.xlsx")
     act_content = File.read(xlsx_file)
     if !File.exist?(target) || File.read(target) != act_content
       FileUtils.cp(xlsx_file, target, :verbose => true, :preserve => true)
