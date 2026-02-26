@@ -404,52 +404,176 @@ class Importer
     match_products_to_migelids
   end
 
+  # Stop words: articles, prepositions, conjunctions, and generic medical/product terms
+  # that match too broadly. Ported from fb2sqlite/src/migel.rs.
   STOPWORDS = %w[
-    und der die das den dem des ein eine einer eines einem für mit von auf aus
-    bei nach über unter zum zur vor bis durch oder als auch wie noch nicht ist
-    und et le la les des du des un une pour avec par sur dans plus que qui
-    per con del della dei degli delle dal dalla dai dalle sul sulla sui sulle
-    the and for with from
+    der die das den dem des ein eine eines einem einen einer
+    fuer mit von und oder bei auf nach ueber unter aus bis
+    pro als inkl exkl max min per zur zum ins vom ohne
+    auch sich noch wenn muss darf resp bzw
+    kauf miete tag jahr monate stueck set alle nur
+    wird ist kann sind werden wurde hat haben
+    steril unsteril sterile non
+    diverse divers diversi
+    gross klein lang kurz
+    position definierte einstellbare
+    les des pour avec par une dans sur qui que
+    achat location piece sans
+    acquisto noleggio pezzo senza
+    the for and with per
+    material produkt products product medical device
+    system systeme systems geraet geraete appareil
+    compression compressione kompression
+    verlaengerung extension estensione prolongation
+    silikon silicone
+    ecarteur divaricatore retraktor
   ].to_set.freeze
 
-  def tokenize(text)
+  # Normalize German umlauts and accented characters so ALL-CAPS text
+  # (e.g. ABSAUGGERAETE) matches proper text (e.g. Absauggeräte).
+  UMLAUT_MAP = {
+    'ä' => 'ae', 'ö' => 'oe', 'ü' => 'ue', 'ß' => 'ss',
+    'é' => 'e', 'è' => 'e', 'ê' => 'e', 'à' => 'a', 'â' => 'a',
+    'ù' => 'u', 'û' => 'u', 'ô' => 'o', 'î' => 'i', 'ç' => 'c',
+  }.freeze
+
+  def normalize_german(text)
+    result = text.downcase
+    UMLAUT_MAP.each { |from, to| result = result.gsub(from, to) }
+    result
+  end
+
+  # Extract keywords from text (min_len chars, after normalization and stop word removal)
+  def extract_keywords(text, min_len = 3)
     return [] unless text
-    text.downcase.gsub(/[^a-zäöüéèàêâîôûëïùçñ0-9\s-]/i, ' ')
-        .split(/\s+/)
-        .reject { |w| w.length < 3 || STOPWORDS.include?(w) }
-        .uniq
+    normalize_german(text)
+      .split(/[^a-z0-9]+/)
+      .select { |w| w.length >= min_len }
+      .reject { |w| STOPWORDS.include?(w) }
+      .uniq
+  end
+
+  # Extract only long (>= 8 char) keywords from additional lines (not first line).
+  # These are specific enough to use as bonus scoring keywords.
+  def extract_secondary_keywords(text)
+    return [] unless text
+    lines = text.split("\n")
+    return [] if lines.size <= 1
+    rest = lines[1..].join(' ')
+    extract_keywords(rest, 8)
+  end
+
+  # Split text into words for word-level matching
+  def split_words(text)
+    text.split(/[^a-z0-9]+/).reject(&:empty?)
+  end
+
+  # Check if keyword matches at word level.
+  # suffix: if true, also matches as suffix of compound word (German)
+  # fuzzy: if true, also tries keyword truncated by 1 char (German plural/case)
+  def word_match?(text_words, keyword, suffix: false, fuzzy: false)
+    text_words.each do |word|
+      return true if word == keyword
+      if suffix && word.length > keyword.length + 2 && word.end_with?(keyword)
+        return true
+      end
+    end
+    if fuzzy && keyword.length >= 7
+      trunc = keyword[0..-2]
+      text_words.each do |word|
+        return true if word == trunc
+        if suffix && word.length > trunc.length + 2 && word.end_with?(trunc)
+          return true
+        end
+      end
+    end
+    false
+  end
+
+  # Compute keyword overlap score using word-level matching.
+  # Returns [score_ratio, max_matched_keyword_len, matched_count]
+  def keyword_score(text_words, keywords, suffix: false, fuzzy: false)
+    total = keywords.sum { |k| k.length.to_f }
+    return [0.0, 0, 0] if total == 0.0
+
+    matched_weight = 0.0
+    max_matched_len = 0
+    matched_count = 0
+    keywords.each do |kw|
+      if word_match?(text_words, kw, suffix: suffix, fuzzy: fuzzy)
+        matched_weight += kw.length.to_f
+        matched_count += 1
+        max_matched_len = kw.length if kw.length > max_matched_len
+      end
+    end
+    [matched_weight / total, max_matched_len, matched_count]
+  end
+
+  # Fuzzy substring check for candidate pre-filtering
+  def fuzzy_contains?(haystack, keyword)
+    return true if haystack.include?(keyword)
+    if keyword.length >= 7
+      trunc = keyword[0..-2]
+      return true if haystack.include?(trunc)
+    end
+    false
   end
 
   def match_products_to_migelids
     puts "#{Time.now}: match_products_to_migelids building migelid keyword index..."
 
-    # Build keyword index: migelid -> [keywords from name + migelid_text]
-    migelid_index = {}  # migel_code -> { migelid: obj, keywords: [...] }
+    # Build per-language keyword index for each migelid
+    # Structure: migel_code -> { migelid, keywords_XX, secondary_XX, all_keywords }
+    migelid_items = []
     codes = migel_code_list.dup
     codes.each do |migel_code|
       next unless migel_code.to_s.length > 5  # only migelids, not groups/subgroups
       migelid = Migel::Model::Migelid.find_by_migel_code(migel_code)
       next unless migelid
 
-      # Gather text from all languages for matching
-      texts = []
+      item = { migelid: migelid, migel_code: migel_code }
+
+      # Per-language primary keywords (first line) and secondary keywords (additional lines, >= 8 chars)
       %w[de fr it].each do |lang|
-        texts << migelid.name.send(lang).to_s
-        texts << migelid.migelid_text.send(lang).to_s if migelid.respond_to?(:migelid_text) && migelid.migelid_text
-        # Also include group and subgroup names for context
+        name_text = migelid.name.send(lang).to_s
+        full_text = name_text.dup
+        if migelid.respond_to?(:migelid_text) && migelid.migelid_text
+          mt = migelid.migelid_text.send(lang).to_s
+          full_text = "#{full_text}\n#{mt}" unless mt.empty?
+        end
+
+        item[:"keywords_#{lang}"] = extract_keywords(name_text)
+        item[:"secondary_#{lang}"] = extract_secondary_keywords(full_text)
+
+        # All keywords from full text for broad candidate finding
+        all_kw = extract_keywords(full_text)
         if migelid.respond_to?(:subgroup) && migelid.subgroup
-          texts << migelid.subgroup.name.send(lang).to_s
+          all_kw += extract_keywords(migelid.subgroup.name.send(lang).to_s)
           if migelid.subgroup.respond_to?(:group) && migelid.subgroup.group
-            texts << migelid.subgroup.group.name.send(lang).to_s
+            all_kw += extract_keywords(migelid.subgroup.group.name.send(lang).to_s)
           end
         end
+        item[:"all_keywords_#{lang}"] = all_kw.uniq
       end
 
-      keywords = texts.flat_map { |t| tokenize(t) }.uniq
-      migelid_index[migel_code] = { migelid: migelid, keywords: keywords } unless keywords.empty?
+      # Combined all_keywords across all languages for inverted index
+      item[:all_keywords] = (
+        item[:all_keywords_de] + item[:all_keywords_fr] + item[:all_keywords_it]
+      ).uniq
+
+      migelid_items << item unless item[:all_keywords].empty?
     end
 
-    puts "#{Time.now}: match_products_to_migelids indexed #{migelid_index.size} migelids"
+    puts "#{Time.now}: match_products_to_migelids indexed #{migelid_items.size} migelids"
+
+    # Build inverted index: keyword -> list of migelid_items indices
+    inverted_index = {}
+    migelid_items.each_with_index do |item, idx|
+      item[:all_keywords].each do |kw|
+        (inverted_index[kw] ||= []) << idx
+      end
+    end
+    puts "#{Time.now}: match_products_to_migelids inverted index has #{inverted_index.size} keywords"
 
     # Now iterate all products and try to match
     matched = 0
@@ -457,7 +581,6 @@ class Importer
     already_linked = 0
     product_count = 0
 
-    # Get all products via the pharmacode index
     all_pharmacodes = begin
       ODBA.cache.index_keys('migel_model_product_pharmacode')
     rescue => e
@@ -479,28 +602,86 @@ class Importer
         next
       end
 
-      # Tokenize product description
-      product_texts = []
-      %w[de fr it].each do |lang|
-        product_texts << product.article_name.send(lang).to_s if product.article_name
-      end
-      product_keywords = product_texts.flat_map { |t| tokenize(t) }.uniq
-      next if product_keywords.empty?
+      # Get per-language product descriptions, normalized
+      desc_de = normalize_german(product.article_name.send('de').to_s)
+      desc_fr = normalize_german(product.article_name.send('fr').to_s)
+      desc_it = normalize_german(product.article_name.send('it').to_s)
+      combined = "#{desc_de} #{desc_fr} #{desc_it}"
+      next if combined.strip.empty?
 
-      # Score against all migelids
-      best_score = 0
-      best_code = nil
-      migelid_index.each do |migel_code, data|
-        overlap = (product_keywords & data[:keywords]).size
-        if overlap > best_score
-          best_score = overlap
-          best_code = migel_code
+      # Pre-split into words for word-level matching
+      words_de = split_words(desc_de)
+      words_fr = split_words(desc_fr)
+      words_it = split_words(desc_it)
+
+      # Step 1: Find candidate migelids via inverted index (fuzzy substring pre-filter)
+      candidate_indices = Set.new
+      inverted_index.each do |keyword, indices|
+        if fuzzy_contains?(combined, keyword)
+          indices.each { |idx| candidate_indices << idx }
+        end
+      end
+      next if candidate_indices.empty?
+
+      # Step 2: Score each candidate using per-language word-level matching
+      best_score = 0.0
+      best_max_len = 0
+      best_idx = nil
+
+      candidate_indices.each do |idx|
+        item = migelid_items[idx]
+
+        # Primary scores (first-line keywords)
+        # DE uses suffix + fuzzy matching (German compound words and plural/case)
+        # FR/IT use exact word matching only
+        score_de, max_de, count_de = keyword_score(words_de, item[:keywords_de], suffix: true, fuzzy: true)
+        score_fr, max_fr, count_fr = keyword_score(words_fr, item[:keywords_fr])
+        score_it, max_it, count_it = keyword_score(words_it, item[:keywords_it])
+
+        # Secondary bonus: only count if at least 1 primary keyword matched
+        _, sec_max_de, sec_count_de = count_de > 0 ?
+          keyword_score(words_de, item[:secondary_de], suffix: true, fuzzy: true) : [0.0, 0, 0]
+        _, sec_max_fr, sec_count_fr = count_fr > 0 ?
+          keyword_score(words_fr, item[:secondary_fr]) : [0.0, 0, 0]
+        _, sec_max_it, sec_count_it = count_it > 0 ?
+          keyword_score(words_it, item[:secondary_it]) : [0.0, 0, 0]
+
+        # Total count = primary + secondary bonus
+        total_de = count_de + sec_count_de
+        total_fr = count_fr + sec_count_fr
+        total_it = count_it + sec_count_it
+        max_len_de = [max_de, sec_max_de].max
+        max_len_fr = [max_fr, sec_max_fr].max
+        max_len_it = [max_it, sec_max_it].max
+
+        # Pick best-scoring language
+        candidates_lang = [
+          [score_de, max_len_de, total_de],
+          [score_fr, max_len_fr, total_fr],
+          [score_it, max_len_it, total_it],
+        ]
+        lang_best = candidates_lang.max_by { |s, _, _| s }
+        lang_score, lang_max_len, lang_count = lang_best
+
+        # Match criteria (from Rust):
+        # - 2+ matched keywords: score >= 0.3, max keyword len >= 6
+        # - 1 matched keyword: score >= 0.5, keyword len >= 10
+        passes = if lang_count >= 2
+                   lang_score >= 0.3 && lang_max_len >= 6
+                 else
+                   lang_score >= 0.5 && lang_max_len >= 10
+                 end
+
+        if passes && (lang_score > best_score || (lang_score == best_score && lang_max_len > best_max_len))
+          best_score = lang_score
+          best_max_len = lang_max_len
+          best_idx = idx
         end
       end
 
-      if best_score >= 2 && best_code
-        migelid_data = migelid_index[best_code]
-        migelid = migelid_data[:migelid]
+      if best_idx
+        item = migelid_items[best_idx]
+        migelid = item[:migelid]
         migelid.products.push(product) unless migelid.products.any? { |p| p.pharmacode == product.pharmacode }
         product.migelid = migelid
         product.save
