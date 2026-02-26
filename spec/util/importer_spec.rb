@@ -160,7 +160,7 @@ describe Importer, "Examples" do
   end
   describe "update method updates group, subgroup, and migelid instances" do
     before(:each) do
-      row = [0,1,2,3,4,5,6,7,8,9,10,11,'name','12.34.56.78.9','L','migelid text Limitation text','qty','unit','1234',19,'31.12.2011']
+      row = [0,1,2,3,4,5,6,7,8,9,10,11,'name',nil,nil,'12.34.56.78.9','L','migelid text Limitation text','qty','unit','1234',nil,'31.12.2011']
       allow(CSV).to receive(:readlines).and_return([0,row])
 
       # for migelid
@@ -209,14 +209,13 @@ describe Importer, "Examples" do
 
       language = 'de'
       expect do
-        skip "No time to fix this error, which was introduced in 2020 after commit b1345b14200097258ff6e3b2f06bb202318f1b85"
         @importer.update('path', language)
       end.not_to raise_error
       expect(@importer.migel_code_list).to eq([])
 
-      row = [0,1,2,3,4,5,6,7,8,9,10,11,'name','12.34.56.78.9','L','migelid text Limitation text','qty','unit','1234',19,'31.12.2011']
+      row = [0,1,2,3,4,5,6,7,8,9,10,11,'name',nil,nil,'12.34.56.78.9','L','migelid text Limitation text','qty','unit','1234',nil,'31.12.2011']
       allow(CSV).to receive(:readlines).and_return([0,row])
-      row[13] = ''
+      row[15] = ''
       row[4]  = '12.34.56.78.9'
       expect do
         @importer.update('path', language)
@@ -224,9 +223,8 @@ describe Importer, "Examples" do
     end
     it "delete group" do
       allow(ODBA.cache).to receive(:index_keys).and_return(['10', '12.34', '12.34.56.78.9'])
-      allow_any_instance_of(Migel::Model::Group).to receive(:find_by_migel_code).and_return(@group)
+      allow(Migel::Model::Group).to receive(:find_by_migel_code).and_return(@group)
       language = 'de'
-      skip "No time to fix this error, which was introduced in 2020 after commit b1345b14200097258ff6e3b2f06bb202318f1b85"
       @importer.update('path', language)
       expect(@importer.migel_code_list).to eq(['10'])
     end
@@ -236,7 +234,6 @@ describe Importer, "Examples" do
       allow(Migel::Model::Subgroup).to receive(:find_by_migel_code).and_return(nil)
       allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(nil)
       language = 'de'
-      skip "No time to fix this error, which was introduced in 2020 after commit b1345b14200097258ff6e3b2f06bb202318f1b85"
       @importer.update('path', language)
       expect(@importer.migel_code_list).to eq(['12.30'])
     end
@@ -244,7 +241,6 @@ describe Importer, "Examples" do
       allow(ODBA.cache).to receive(:index_keys).and_return(['12', '12.34', '12.34.56.78.0'])
       allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(@migelid)
       language = 'de'
-      skip "No time to fix this error, which was introduced in 2020 after commit b1345b14200097258ff6e3b2f06bb202318f1b85"
       @importer.update('path', language)
       expect(@importer.migel_code_list).to eq(['12.34.56.78.0'])
     end
@@ -262,15 +258,13 @@ describe Importer, "Examples" do
   it "unimported_migel_code_list should return uniported migel_code list" do
     allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     migelid = double('migelid',:products => [])
-    allow_any_instance_of(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
-    skip "No time to fix this error, which was introduced in 2020 after commit b1345b14200097258ff6e3b2f06bb202318f1b85"
+    allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
     expect(@importer.unimported_migel_code_list).to eq(['migel_code'])
   end
   it "unimported_migel_code_list should output unimported migel_code list into a file" do
-    skip "No time to fix this error, which was introduced in 2020 after commit b1345b14200097258ff6e3b2f06bb202318f1b85"
-    allow_any_instance_of(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
+    allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
     migelid = double('migelid',:products => [])
-    allow_any_instance_of(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
+    allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
     file = double('out', :print => nil)
     allow(File).to receive(:open).and_yield(file)
     expect(@importer.unimported_migel_code_list('unimported_migel_code_list.dat')).to eq(['migel_code'])

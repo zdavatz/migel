@@ -41,10 +41,15 @@ describe Server do
     expected = [migelid]
     expect(@server.send(:search_migelid_by_name, 'query', 'de')).to eq(expected)
   end
-  it "search_migel_migelid should return a result of search_migelid_fulltext" do
-    skip('I do not have the time to fix this test for search_by_name_de')
-    allow(ODBA.cache).to receive(:retrieve_from_index).and_return(['result'])
-    expect(@server.search_migel_migelid('query', 'de')).to eq(['result'])
+  it "search_migel_migelid should default to German when given unsupported language" do
+    migelid  = double('migelid')
+    subgroup = double('subgroup', :migelids => [migelid])
+    group    = double('group', :subgroups => [subgroup])
+    allow(Migel::Model::Group).to receive(:search_by_name_de).and_return([group])
+    allow(Migel::Model::Subgroup).to receive(:search_by_name_de).and_return([subgroup])
+    allow(Migel::Model::Migelid).to receive(:search_by_name_de).and_return([migelid])
+    expected = [migelid]
+    expect(@server.search_migel_migelid('query', 'it')).to eq(expected)
   end
   it "search_migel_migelid should return a result of search_migelid_by_name" do
     allow(ODBA.cache).to receive(:retrieve_from_index).and_return([])
@@ -211,7 +216,7 @@ EOD
   it "_admin should return error message when StandardError happens during the method execution" do
     result = []
     @server._admin('Server.hogehoge', result)
-    expect(result).to match([/undefined method `hogehoge'.*Migel::Util::Server/])
+    expect(result).to match([/undefined method [`']hogehoge'.*Migel::Util::Server/])
   end
   it "init_fulltext_index_tables should raise nothing" do
     allow(ODBA.cache).to receive(:fetch_named).and_return({})
