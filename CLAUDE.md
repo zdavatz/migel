@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 migel is a Ruby gem for managing MiGeL (Mittel- und Geräteliste) data — the Swiss medical devices and equipment catalog — used by ch.oddb.org. It imports device data from XLS/CSV sources and GS1 Switzerland, stores it via ODBA/PostgreSQL, and exposes it through a DRb server.
 
-**Ruby version:** 3.3.0 | **License:** GPLv2
+**Ruby version:** 3.4.5 | **License:** GPLv2
 
 ## Build & Test Commands
 
@@ -35,8 +35,9 @@ All models inherit from `ModelSuper` (lib/migel/model_super.rb), which provides 
 ### Key Components
 
 - **lib/migel/util/importer.rb** — Main import logic:
-  - `update_all` downloads MiGeL.xls, processes groups/subgroups/migelids
-  - `update_products_from_gs1` downloads GS1 CSV from `id.gs1.ch` and creates/updates products
+  - `update_all` downloads BAG XLSX from `bag.admin.ch`, parses 3 language sheets (MiGeL D/F/I), processes groups/subgroups/migelids
+  - `update_products_from_gs1` downloads GS1 CSV from `id.gs1.ch`, creates/updates products, then text-matches them to migelids
+  - `match_products_to_migelids` links GS1 products to migelids by keyword overlap on Bezeichnung/article_name (threshold: >= 2 matching keywords)
 - **lib/migel/util/server.rb** — DRb server implementation (default: `druby://127.0.0.1:33000`)
 - **lib/migel/plugin/swissindex.rb** and **lib/migel/ext/swissindex.rb** — Legacy SwissIndex/RefData integration (superseded by GS1 for product data)
 - **lib/migel/config.rb** — Configuration management
@@ -51,15 +52,40 @@ All models inherit from `ModelSuper` (lib/migel/model_super.rb), which provides 
 
 Uses ODBA (Object Database Abstraction) backed by PostgreSQL via `ydbi`/`ydbd-pg`. DRb wrappers enable remote object access.
 
-**Note:** ODBA 1.1.8/1.1.9 uses `WITH OIDS` in SQL which is incompatible with PostgreSQL 12+. The installed gem's `lib/odba/storage.rb` must be patched to remove `WITH OIDS` from `CREATE TABLE` statements.
+**Note:** ODBA 1.1.8/1.1.9 uses `WITH OIDS` in SQL which is incompatible with PostgreSQL 12+. The installed gem's `lib/odba/storage.rb` must be patched to remove `WITH OIDS` from `CREATE TABLE` statements. (Production runs PostgreSQL 10.23 which still supports `WITH OIDS`.)
+
+**Ruby 3.4.5 compatibility:** The `csv` and `observer` gems were extracted from stdlib in Ruby 3.4 and are now declared in the Gemfile.
 
 ### Data Flow
 
-1. MiGeL.xls downloaded from `oddb2xml_files` GitHub repo
-2. `Importer.update_all` parses XLS into Group/Subgroup/Migelid objects (catalog structure)
-3. `Importer.update_products_from_gs1` downloads GS1 CSV (~189K products) and creates/updates Product records
+1. BAG XLSX downloaded from `bag.admin.ch` to `data/xlsx/`
+2. `Importer.update_all` parses XLSX into Group/Subgroup/Migelid objects (catalog structure) for all 3 languages
+3. `Importer.update_products_from_gs1` downloads GS1 CSV (~189K products) to `data/csv/` and creates/updates Product records
 4. Products are matched/keyed by GTIN (used as pharmacode). No pharmacode field in GS1 data.
-5. Fulltext index tables rebuilt via `system.init_fulltext_index_tables`
+5. `match_products_to_migelids` links products to migelids via text-matching on descriptions
+6. Fulltext index tables rebuilt via `system.init_fulltext_index_tables`
+
+### BAG XLSX Import (MiGeL Catalog Source)
+
+The official MiGeL catalog is downloaded from BAG as XLSX. It contains 3 sheets: "MiGeL D" (de), "MiGeL F" (fr), "MiGeL I" (it).
+
+| XLSX Column | Index | Maps to |
+|-------------|-------|---------|
+| Produktegruppe | 0 | Group code (e.g. "01") |
+| Kategorie | 1 | Subgroup code (e.g. "01.01") |
+| Positions-Nr. | 7 | migel_code (e.g. "01.01.01.00.1") |
+| L | 8 | Limitation flag |
+| Bezeichnung | 9 | name + migelid_text |
+| Limitation | 10 | limitation_text |
+| Menge / Einheit | 11 | qty + unit (combined field) |
+| HVB Selbstanwendung | 12 | price (preferred) |
+| HVB Pflege | 13 | price (fallback) |
+| Gültig ab | 14 | date |
+
+Row types are distinguished by which columns are populated:
+- **Group headers**: Produktegruppe set, no Kategorie, no Positions-Nr
+- **Subgroup headers**: Kategorie set, no Positions-Nr
+- **Positions**: Positions-Nr set (these become Migelid objects)
 
 ### GS1 CSV Import (Primary Product Data Source)
 
@@ -80,7 +106,7 @@ The CSV is UTF-8 with BOM; parsed with `encoding: 'bom|utf-8'`.
 
 ```bash
 bundle exec bin/migeld                    # Start DRb server (required)
-bundle exec ruby jobs/update_migel        # Run full import (XLS + GS1 + reindex)
+bundle exec ruby jobs/update_migel        # Run full import (BAG XLSX + GS1 + text-match + reindex)
 ```
 
 The DRb server must be running on port 33000 for the job to complete (needed for `init_fulltext_index_tables`).
@@ -93,6 +119,8 @@ The web frontend lives at `~/.software/oddb.org`. When modifying migel search re
 - **src/view/migel/result.rb** — MiGeL catalog result views (ResultList with group/subgroup headers).
 - **src/custom/lookandfeelbase.rb** — Component layout definitions (`migel_list_components`, `migel_item_list_components`).
 - **src/view/additional_information.rb** — Google search, mail, twitter, facebook link helpers. Uses DRb objects from migel; must handle nil values and frozen strings (use `.to_s.dup.force_encoding("utf-8")`).
+
+Products imported from GS1 may not be linked to a migelid — views must handle `nil` for `migel_code`, `price`, and other delegated migelid fields.
 
 Pagination links for migel search must include `zone: :migel` in the URL args, otherwise the request falls through to drug search and redirects to home.
 
