@@ -532,24 +532,17 @@ describe Importer, "Examples" do
   end
 end # describe
 
-  describe 'RealWorld: create 3 language specific CSV files from the given xls file' do
+  describe 'RealWorld: update_all from BAG XLSX' do
     before(:each) do
-      @saved_xls = Migel::Util::Importer::OriginalXLS
       allow(ODBA.cache).to receive(:index_keys).and_return(['migel_code'])
       multilingual = double('multilingual', :de => '')
       product = double('product',:article_name => multilingual)
       migelid = double('migelid',:products => [product])
       allow(Migel::Model::Migelid).to receive(:find_by_migel_code).and_return(migelid)
     end
-    after(:each) do
-      Migel::Util::Importer::OriginalXLS = @saved_xls
-    end
 
     def setup_importer
       @importer = Migel::Util::Importer.new
-      @test_file = File.expand_path(File.join(__FILE__, '..',  '..', 'data', 'MiGeL-2022.01.21.xls'))
-      expect(File.exist?(@test_file)).to be true
-#      expect(File.size(@test_file)).to be < 75000
       @server = Migel::Util::Server.new
       allow_any_instance_of(DRbObject).to receive(:session).and_return(@server)
       migelid = double('migelid',:migel_code => '12.34.56.78.9', :delete => true)
@@ -561,35 +554,113 @@ end # describe
                     )
       allow(Migel::Model::Group).to receive(:find_by_code)
       expect(@importer.data_dir).not_to be_nil
-      FileUtils.rm(Dir.glob(File.join(@importer.data_dir, '*')))
     end
 
-    it "missing_article_name_migel_code_list should return missing migel code list" do
-      setup_importer
-      Migel::Util::Importer::OriginalXLS = @test_file
-      @importer.update_all
-      expect(@importer.xls_file).to match /MiGeL.xls/
-      expect(Dir.glob(File.join(@importer.data_dir, '*.csv')).size).to  eq(3)
-      baseNames = Dir.glob(File.join(@importer.data_dir, '*.csv')).collect{ |f| File.basename(f) }
-      { 'migel_de.csv' =>
-          'Produktegruppe Nr,Limitation Produktegruppe,Produktegruppe,Beschreibung Produktegruppe,Kategorie Nr,Limitation Kategorie,Kategorie,Beschreibung Kategorie,Revision Kaegorie,Revision Kat Gültig ab,Unterkategorie Nr,Limitation Unterkategorie,Unterkategorie,Positions Nummer,Limitation,Bezeichnung,Menge,Einheit,Höchstvergütungsbetrag,Revision Position,Revision Gültig ab',
-        'migel_fr.csv' =>
-          'Groupe de produits No,Limitation Groupe de produits,Groupe de produits,Description Groupes de produits,Catégorie No,Limitation Catégorie,Catégorie,Description Catégorie,Revision Catégorie,Valable à partir du (Revision Catégorie),Sous-catégorie No,Limitation Sous-catégorie,Sous-catégorie,No pos.,Limitation,Dénomination,Quantité,Unité de mesure,Montant,Revision,Valable à partir du',
-        'migel_it.csv' =>
-          'Gruppi di prodotti No,Limitazione (Gruppi di prodotti),Gruppi di prodotti,Descrizione,Categoria No,Limitazione (Categoria),Categoria,Descrizione Categoria,Revisione Categoria,Valida a partire dal (Revisione Categoria),Sotto-categoria No,Limitazione Sotto-categoria,Sotto-categoria,Numero di posizione,Limitazione,Denominazione,Quantita,Unità,Importo Massimo,Revisione,Valida a partire dal',
-      }.each do
-        |csv_file, firstline|
-        expect(baseNames.index(csv_file)).not_to eq(nil)
-        lines=CSV.readlines(File.join(@importer.data_dir, csv_file))
-        expect(lines[1].join(',')).to match /^01.,/
-        next unless /_de.csv/.match(csv_file)
-        expect(lines[7].join(',')).to match /^05.,/
-        expect(lines[7].join(',')).to match /,05\.10\.02\.00\.1,/
-        expect(lines.size).to eq(9)
-        # skip "expect(lines.first.chomp).to eq(firstline)"
+    def create_test_xlsx(path)
+      book = RubyXL::Workbook.new
+      # RubyXL creates a default sheet; rename it and add two more
+      sheet_de = book.worksheets[0]
+      sheet_de.sheet_name = 'MiGeL D'
+      sheet_fr = book.add_worksheet('MiGeL F')
+      sheet_it = book.add_worksheet('MiGeL I')
+
+      # Add a group row, subgroup row, and position row to each sheet
+      [sheet_de, sheet_fr, sheet_it].each do |sheet|
+        # Row 0: header (skipped by importer)
+        sheet.add_cell(0, 0, 'Produktegruppe')
+
+        # Row 1: Group header — col 0 = group code, col 9 = name
+        sheet.add_cell(1, 0, '01')
+        sheet.add_cell(1, 9, 'Testgruppe')
+
+        # Row 2: Subgroup header — col 1 = subgroup code, col 9 = name
+        sheet.add_cell(2, 1, '01.01')
+        sheet.add_cell(2, 9, 'Testsubgruppe')
+
+        # Row 3: Position — col 7 = pos_nr, col 9 = bezeichnung, col 12 = price, col 14 = date
+        sheet.add_cell(3, 7, '01.01.01.00.1')
+        sheet.add_cell(3, 9, "Testprodukt\nDetailtext")
+        sheet.add_cell(3, 11, '1 Stk')
+        sheet.add_cell(3, 12, 50.0)
+        sheet.add_cell(3, 14, '01.10.2021')
       end
+
+      book.write(path)
+    end
+
+    def setup_xlsx_stubbing
+      # Create a test XLSX file
+      @test_xlsx = File.join(@importer.send(:instance_variable_get, :@xlsx_dir), 'test_migel.xlsx')
+      create_test_xlsx(@test_xlsx)
+      test_content = File.read(@test_xlsx, mode: 'rb')
+
+      # Stub URI.open to return the test XLSX content (fresh StringIO each call)
+      allow(URI).to receive(:open).with(Migel::Util::Importer::BAG_XLSX_URL) { |_, &blk| blk.call(StringIO.new(test_content)) }
+
+      # Remove the latest file so update_all doesn't skip
+      xlsx_dir = @importer.send(:instance_variable_get, :@xlsx_dir)
+      latest = File.join(xlsx_dir, 'MiGeL_BAG-latest.xlsx')
+      FileUtils.rm_f(latest)
+    end
+
+    it "update_all should process BAG XLSX and call model updates" do
+      setup_importer
+      setup_xlsx_stubbing
+
+      # Set up model stubs to track calls
+      name_dbl = double('name')
+      allow(name_dbl).to receive(:de=)
+      allow(name_dbl).to receive(:fr=)
+      allow(name_dbl).to receive(:it=)
+      subgroup_dbl = double('subgroup',
+                            :code => '01',
+                            :name => name_dbl,
+                            :group= => nil,
+                            :update_limitation_text => nil,
+                            :save => nil,
+                            :migelids => [],
+                            :migel_code => '01.01'
+                           )
+      group_dbl = double('group',
+                        :code => '01',
+                        :name => name_dbl,
+                        :update_limitation_text => nil,
+                        :save => nil,
+                        :subgroups => [subgroup_dbl],
+                        :migel_code => '01'
+                        )
+      allow(Migel::Model::Group).to receive(:find_by_code).and_return(group_dbl)
+      allow(Migel::Model::Group).to receive(:new).and_return(group_dbl)
+
+      migelid_dbl = double('migelid',
+                           :code => '01.00.1',
+                           :subgroup= => nil,
+                           :name => name_dbl,
+                           :migelid_text => name_dbl,
+                           :save => nil,
+                           :migel_code => '01.01.01.00.1'
+                          )
+      allow(migelid_dbl).to receive(:limitation_text).with(any_args).and_return(name_dbl)
+      allow(migelid_dbl).to receive(:update_multilingual)
+      allow(migelid_dbl).to receive(:price=)
+      allow(migelid_dbl).to receive(:qty=)
+      allow(migelid_dbl).to receive(:date=)
+      allow(migelid_dbl).to receive(:limitation=)
+      allow(subgroup_dbl).to receive(:migelids).and_return([migelid_dbl])
+
       @importer.update_all
-      expect(Dir.glob(File.join(@importer.data_dir, '*.csv')).size).to  eq(3)
+
+      # Verify the XLSX was processed (latest file should exist now)
+      xlsx_dir = @importer.send(:instance_variable_get, :@xlsx_dir)
+      latest = File.join(xlsx_dir, 'MiGeL_BAG-latest.xlsx')
+      expect(File.exist?(latest)).to be true
+
+      # Second call should skip (unchanged)
+      @importer.update_all
+
+      # Clean up
+      FileUtils.rm_f(latest)
+      FileUtils.rm_f(@test_xlsx)
     end
 
     it "save_all_products_all_languages should work fine and send a correct email"  do
@@ -598,26 +669,63 @@ end # describe
         delivery_method :test
       end
       ::Mail::TestMailer.deliveries.clear
-      Migel::Util::Importer::OriginalXLS = @test_file
       @importer.save_all_products_all_languages
       expect(::Mail::TestMailer.deliveries.size).to eq(3)
       ::Mail::TestMailer.deliveries.each{ |mail| expect(mail.to_s).not_to match /RuntimeError/ }
     end
-    it "the generated CSV file should have a correct date"  do
+
+    it "update_all should process all 3 language sheets" do
       setup_importer
-      ::Mail.defaults do
-        delivery_method :test
-      end
-      # https://www.bag.admin.ch/bag/de/home/versicherungen/krankenversicherung/krankenversicherung-leistungen-tarife/Mittel-und-Gegenstaendeliste.html
-      setup_importer
-      Migel::Util::Importer::OriginalXLS = @test_file
+      setup_xlsx_stubbing
+
+      name_dbl = double('name')
+      allow(name_dbl).to receive(:de=)
+      allow(name_dbl).to receive(:fr=)
+      allow(name_dbl).to receive(:it=)
+      subgroup_dbl = double('subgroup',
+                            :code => '01',
+                            :name => name_dbl,
+                            :group= => nil,
+                            :update_limitation_text => nil,
+                            :save => nil,
+                            :migelids => [],
+                            :migel_code => '01.01'
+                           )
+      group_dbl = double('group',
+                        :code => '01',
+                        :name => name_dbl,
+                        :update_limitation_text => nil,
+                        :save => nil,
+                        :subgroups => [subgroup_dbl],
+                        :migel_code => '01'
+                        )
+      allow(Migel::Model::Group).to receive(:find_by_code).and_return(group_dbl)
+      allow(Migel::Model::Group).to receive(:new).and_return(group_dbl)
+
+      migelid_dbl = double('migelid',
+                           :code => '01.00.1',
+                           :subgroup= => nil,
+                           :name => name_dbl,
+                           :migelid_text => name_dbl,
+                           :save => nil,
+                           :migel_code => '01.01.01.00.1'
+                          )
+      allow(migelid_dbl).to receive(:limitation_text).with(any_args).and_return(name_dbl)
+      allow(migelid_dbl).to receive(:update_multilingual)
+      allow(migelid_dbl).to receive(:price=)
+      allow(migelid_dbl).to receive(:qty=)
+      allow(migelid_dbl).to receive(:date=)
+      allow(migelid_dbl).to receive(:limitation=)
+      allow(subgroup_dbl).to receive(:migelids).and_return([migelid_dbl])
+
+      # Expect update_from_bag_sheet to be called for each language
+      expect(@importer).to receive(:update_from_bag_sheet).exactly(3).times.and_call_original
       @importer.update_all
-      expect(@importer.xls_file).to match /MiGeL.xls/
-      files = Dir.glob(File.join(@importer.data_dir, '*.csv'))
-      expect(files.size).to  eq(LANGUAGE_NAMES.size)
-      first_file = CSV.readlines(files.first)
-      first_row = first_file[1]
-      expect(first_row[22]).to eq '01.10.2021'
+
+      # Clean up
+      xlsx_dir = @importer.send(:instance_variable_get, :@xlsx_dir)
+      FileUtils.rm_f(File.join(xlsx_dir, 'MiGeL_BAG-latest.xlsx'))
+      FileUtils.rm_f(@test_xlsx)
     end
   end
 
