@@ -1,3 +1,13 @@
+GIT
+  remote: https://github.com/zdavatz/odba.git
+  revision: a25fe3c6118bd1a0bedac3fc88a99f604da61360
+  tag: v1.2.0
+  specs:
+    odba (1.2.0)
+      drb
+      observer
+      stringio
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -105,7 +115,6 @@ GEM
       bigdecimal
       stringio
     observer (0.1.2)
-    odba (1.1.8)
     pg (1.5.4)
     psych (3.3.4)
     public_suffix (7.0.5)
@@ -197,7 +206,7 @@ DEPENDENCIES
   net-pop
   net-smtp
   observer
-  odba (>= 1.1.6)
+  odba!
   pg (>= 1.0.0)
   psych (< 4.0.0)
   rack (< 3.0.0)

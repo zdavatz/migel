@@ -6,7 +6,7 @@
 require 'sbsm/app'
 require 'migel/util/importer'
 require 'odba/drbwrapper'
-require 'odba/18_19_loading_compatibility'
+require 'migel/loading_compatibility'
 #another monkey patch for CSV
 class CSV
 	puts "Attention: monkey-patching CSV::Cell"

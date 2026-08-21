@@ -7,7 +7,7 @@ require 'rubygems'
 require 'savon'
 require 'mechanize'
 require 'drb'
-require 'odba/18_19_loading_compatibility'
+require 'migel/loading_compatibility'
 
 module ODDB
   module Swissindex
