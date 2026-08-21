@@ -52,20 +52,16 @@ All models inherit from `ModelSuper` (lib/migel/model_super.rb), which provides 
 
 Uses ODBA (Object Database Abstraction) backed by PostgreSQL via `ydbi`/`ydbd-pg`. DRb wrappers enable remote object access.
 
-**odba is pinned to the git tag `v1.2.0`**, not to a published gem:
-
-```ruby
-gem 'odba', git: 'https://github.com/zdavatz/odba.git', tag: 'v1.2.0'
-```
-
-1.2.0 is merged and tagged but not yet on rubygems.org. Once it is published, replace that line with `gem 'odba', '>= 1.2.0'`. Two fixes make it mandatory, and both used to be hand-patched into the installed gem (a patch every `bundle install` silently reverted):
+**odba must be >= 1.2.0** (`gem 'odba', '>= 1.2.0'`). Two fixes make it mandatory, and both used to be hand-patched into the installed gem — a patch every `bundle install` silently reverted:
 
 - **Reconnect after the database server restarts.** ydbd-pg maps every `PG::Error` onto `DBI::ProgrammingError`, so `ODBA::ConnectionPool` could not tell a dead socket from a bad statement and refused to reconnect. A PostgreSQL restart therefore broke every pooled connection permanently — migel search failed with `PQsocket() can't get socket descriptor` until `migeld` itself was restarted. 1.2.0 matches the message against known connection-level failures instead.
 - **`WITH OIDS` removed** from `CREATE TABLE`, required for PostgreSQL 12+. (Production runs PostgreSQL 10 on port 5433, which still accepts it.)
 
+1.2.1 changes nothing under `lib/` — it only ships odba's own test and CI fixes.
+
 **`lib/migel/loading_compatibility.rb`** is vendored verbatim from `odba/18_19_loading_compatibility.rb`, which 1.2.0 deleted. Despite the name it is not dead code: it teaches Marshal how to load `Date` and `Encoding::Character::UTF8` objects written to the ODBA tables under Ruby 1.8. `lib/migel/util/server.rb` requires it, so **without it `bin/migeld` does not start at all**. Objects marshalled by any later Ruby are unaffected — modern `Date` uses `marshal_dump`/`marshal_load`, so the `_load` it defines is never consulted for them. Drop the file once the database is known to hold no 1.8-era objects.
 
-**Ruby 3.2+ only.** odba 1.2.0 sets `required_ruby_version >= 3.2`. Because it comes from a git source bundler cannot fall back to an older odba, so the Ruby 2.7/3.0/3.1 rows of `.github/workflows/ruby.yml` can no longer resolve.
+**Ruby 3.2+ only.** odba 1.2.0 and later set `required_ruby_version >= 3.2`, and the Gemfile requires `>= 1.2.0`, so there is no odba satisfying both that constraint and an older Ruby. `.github/workflows/ruby.yml` therefore tests 3.2–3.4 only.
 
 **Ruby 3.4.5 compatibility:** The `csv` and `observer` gems were extracted from stdlib in Ruby 3.4 and are now declared in the Gemfile.
 

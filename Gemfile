@@ -8,9 +8,8 @@ gem 'ydbd-pg'
 gem 'webrick'
 gem 'csv'
 gem 'observer'
-# Temporary: 1.2.0 fixes reconnecting after the database server restarts.
-# Revert to "gem 'odba', '>= 1.2.0'" once 1.2.0 is published on rubygems.org.
-gem 'odba', git: 'https://github.com/zdavatz/odba.git', tag: 'v1.2.0'
+# >= 1.2.0 reconnects after the database server restarts; see CLAUDE.md.
+gem 'odba', '>= 1.2.0'
 gem 'rclconf'
 gem 'mail', '< 2.8.0' # or you get an error about mail/indifferent_hash
 gem 'savon'#, '0.9.7'

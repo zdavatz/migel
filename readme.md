@@ -16,13 +16,7 @@ Ruby 3.2 or later. Use bundler to install all dependencies mentioned in the Gemf
 
 ### odba
 
-odba is pinned to the git tag `v1.2.0` rather than to a published gem:
-
-    gem 'odba', git: 'https://github.com/zdavatz/odba.git', tag: 'v1.2.0'
-
-1.2.0 is merged and tagged but not yet released on rubygems.org. Once it is
-published, this can go back to a plain `gem 'odba', '>= 1.2.0'`. Two fixes in it
-matter here:
+odba must be at least 1.2.0. Two fixes in it matter here:
 
 * **Reconnecting after the database server restarts.** ydbd-pg reports a lost
   connection as `DBI::ProgrammingError`, which `ODBA::ConnectionPool` used to
