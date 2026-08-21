@@ -20,7 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        ruby: [2.7, '3.0', 3.1, 3.2, 3.3]
+        # odba 1.2.0 sets required_ruby_version >= 3.2, and it comes from a git
+        # source, so bundler cannot fall back to an older odba on 2.7/3.0/3.1.
+        ruby: ['3.2', '3.3', '3.4']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
