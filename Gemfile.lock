@@ -135,7 +135,7 @@ GEM
       nokogiri (>= 1.10.8)
       rubyzip (>= 3.2.2)
     rubyntlm (0.6.3)
-    rubyzip (3.2.2)
+    rubyzip (3.4.0)
     savon (2.17.2)
       akami (~> 1.2)
       builder (>= 2.1.2)
