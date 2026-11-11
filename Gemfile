@@ -17,7 +17,7 @@ gem 'mechanize'
 gem 'spreadsheet'
 gem 'rubyXL'
 gem 'deprecated', '< 3.0.0'
-gem 'sbsm', '>=1.5.8'
+gem 'sbsm', '>= 1.6.3' # older sbsm pulls in hpricot, which no longer compiles
 gem 'pg', '>= 1.0.0' # for running bin/migeld
 gem 'activesupport' # for sinularize
 gem 'psych', '< 4.0.0'
