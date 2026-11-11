@@ -29,7 +29,7 @@ jobs:
       # ubuntu-latest (Ubuntu 26.04), which makes incompatible pointer types
       # an error. Downgrade that error back to a warning. (Plain CFLAGS is
       # ignored by mkmf, so it has to go through bundler's build config.)
-      BUNDLE_BUILD__HPRICOT: "--with-cflags=-O2 -Wno-error=incompatible-pointer-types"
+      BUNDLE_BUILD__HPRICOT: "--with-cflags=-Wno-error=incompatible-pointer-types"
     steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1

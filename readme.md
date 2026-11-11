@@ -53,7 +53,7 @@ Don't forget to manually call  jobs/update_migel_products_with_report, as this i
 
 GitHub Actions runs the tests on each push using `bundle exec rake spec`, across Ruby 3.2, 3.3 and 3.4. See `.github/workflows/ruby.yml`. (The `.travis.yml` left in the tree is dead - Travis-CI is no longer used.)
 
-The workflow sets `BUNDLE_BUILD__HPRICOT="--with-cflags=-O2 -Wno-error=incompatible-pointer-types"` (plain `CFLAGS` is ignored by mkmf). Without it
+The workflow sets `BUNDLE_BUILD__HPRICOT="--with-cflags=-Wno-error=incompatible-pointer-types"` (plain `CFLAGS` is ignored by mkmf). Without it
 `bundle install` fails on `ubuntu-latest` (Ubuntu 26.04): hpricot 0.8.6, an
 unmaintained dependency of sbsm, does not compile with the newer GCC, which
 treats incompatible pointer types as an error. If you hit the same error
