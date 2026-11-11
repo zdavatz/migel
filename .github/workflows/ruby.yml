@@ -24,12 +24,6 @@ jobs:
         # source, so bundler cannot fall back to an older odba on 2.7/3.0/3.1.
         ruby: ['3.2', '3.3', '3.4']
     runs-on: ${{ matrix.os }}
-    env:
-      # hpricot 0.8.6 (pulled in by sbsm) no longer compiles with the GCC on
-      # ubuntu-latest (Ubuntu 26.04), which makes incompatible pointer types
-      # an error. Downgrade that error back to a warning. (Plain CFLAGS is
-      # ignored by mkmf, so it has to go through bundler's build config.)
-      BUNDLE_BUILD__HPRICOT: "--with-cflags=-Wno-error=incompatible-pointer-types"
     steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1

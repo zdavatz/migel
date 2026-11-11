@@ -51,13 +51,7 @@ Or if you are using bundler
 
 Don't forget to manually call  jobs/update_migel_products_with_report, as this is a job run only twice a year!
 
-GitHub Actions runs the tests on each push using `bundle exec rake spec`, across Ruby 3.2, 3.3 and 3.4. See `.github/workflows/ruby.yml`. (The `.travis.yml` left in the tree is dead - Travis-CI is no longer used.)
-
-The workflow sets `BUNDLE_BUILD__HPRICOT="--with-cflags=-Wno-error=incompatible-pointer-types"` (plain `CFLAGS` is ignored by mkmf). Without it
-`bundle install` fails on `ubuntu-latest` (Ubuntu 26.04): hpricot 0.8.6, an
-unmaintained dependency of sbsm, does not compile with the newer GCC, which
-treats incompatible pointer types as an error. If you hit the same error
-locally, run `bundle config build.hpricot --with-cflags=-Wno-error=incompatible-pointer-types`.
+GitHub Actions runs the tests on each push using `bundle exec rake spec`, across Ruby 3.2, 3.3 and 3.4. sbsm must be >= 1.6.3: older sbsm pulls in hpricot 0.8.6, which no longer compiles on `ubuntu-latest` (Ubuntu 26.04, newer GCC). See `.github/workflows/ruby.yml`. (The `.travis.yml` left in the tree is dead - Travis-CI is no longer used.)
 
 The coverage output can be found under coverage/index.html.
 
